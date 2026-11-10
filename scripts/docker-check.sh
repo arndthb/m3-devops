@@ -73,7 +73,7 @@ if command -v podman-compose >/dev/null 2>&1; then
   m3_docker_status INFO 'Podman Compose' 'Available; separate from Docker Compose'
 fi
 
-printf '\n\\033[1m  ◆ HOST SETUP GUIDANCE\\033[0m\\n'
+printf '\n\033[1m  ◆ HOST SETUP GUIDANCE\033[0m\n'
 if (( docker_ready && docker_compose )); then
   printf '  Docker Engine and Compose are ready.\n'
 elif [[ -r /etc/os-release ]] && grep -q '^ID=fedora' /etc/os-release && ! command -v rpm-ostree >/dev/null 2>&1; then
