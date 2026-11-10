@@ -256,8 +256,9 @@ update_m3() {
   printf '\n\033[1m  ◆ CHANGELOG\033[0m\n'
   printf '  ──────────────────────────────────────────────\n'
   if [[ "$local_rev" == "$remote_rev" ]]; then
-    printf '  Latest installed commit:\n'
-    git -C "$repo" log -1 --format='  %h  %s' HEAD 2>/dev/null
+    printf '  No new commits.\n\n'
+    printf '  Latest commit  '
+    git -C "$repo" log -1 --format='%h  %s' HEAD 2>/dev/null
     printf '\n  ┌──────────────────────────────────────────┐\n'
     printf '  │  \033[1;32m✓ ALL UP TO DATE\033[0m                        │\n'
     printf '  │  No new updates available.               │\n'
@@ -284,10 +285,16 @@ update_m3() {
   if [[ -n "$status" ]]; then
     printf '  \033[31m✗ Local changes detected. Update cancelled.\033[0m\n'; return 1
   fi
-  printf '\n  Installing update...\n'
-  if git -C "$repo" merge --ff-only FETCH_HEAD; then
-    printf '\n  \033[1;32m✓ Updated %s → %s\033[0m\n' "$local_rev" "$remote_rev"
-    printf '  Restart m³ to load the new version.\n'
+  printf '\n\033[1m  ◆ INSTALLATION\033[0m\n'
+  printf '  ──────────────────────────────────────────────\n'
+  printf '  \033[36m●\033[0m Applying %s new commit(s)...\n' "$count"
+  if git -C "$repo" merge --quiet --ff-only FETCH_HEAD; then
+    printf '  \033[1;32m✓\033[0m Fast-forward completed\n'
+    printf '  \033[1;32m✓\033[0m Installed revision: %s\n' "$remote_rev"
+    printf '\n  ┌──────────────────────────────────────────┐\n'
+    printf '  │  \033[1;32m✓ UPDATE INSTALLED\033[0m                      │\n'
+    printf '  │  Restart m³ to load the new version.     │\n'
+    printf '  └──────────────────────────────────────────┘\n'
   else
     printf '\n  \033[31m✗ Update failed; review Git output.\033[0m\n'; return 1
   fi
