@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# m³ interactive menu — read-only; no installation commands are executed.
+# m³ interactive menu — read-only; confirmation is simulated, no installs.
 set -u
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 tools=(git podman distrobox kubectl go terraform)
@@ -11,7 +11,8 @@ pause_menu() {
 }
 
 preview_selected() {
-  local i tool count=0
+  local i tool count=0 missing=0 answer
+  local -a pending=()
   printf '\nm³ — Selected tools installation preview (DRY RUN)\n'
   printf 'No software will be installed.\n'
   for i in "${!tools[@]}"; do
@@ -21,6 +22,8 @@ preview_selected() {
     if command -v "$tool" >/dev/null 2>&1; then
       printf '[installed] %s — no action needed\n' "$tool"
     else
+      missing=$((missing + 1))
+      pending+=("$tool")
       printf '[missing]   %s\n' "$tool"
       if ! command -v brew >/dev/null 2>&1; then
         printf '            Homebrew not detected; installation method needs review.\n'
@@ -33,6 +36,18 @@ preview_selected() {
   done
   if (( count == 0 )); then
     printf 'No tools selected.\n'
+  elif (( missing == 0 )); then
+    printf 'All selected tools are already installed.\n'
+  else
+    printf '\nConfirmation flow test: %d missing tool(s): %s\n' "$missing" "${pending[*]}"
+    printf 'Type INSTALL to confirm this plan, or press Enter to cancel: '
+    IFS= read -r answer || answer=''
+    if [[ "$answer" == INSTALL ]]; then
+      printf 'Confirmation accepted (simulation only).\n'
+      printf 'Installation execution is not enabled in this version.\n'
+    else
+      printf 'Cancelled.\n'
+    fi
   fi
   printf 'Preview complete. No changes made.\n'
 }
@@ -81,7 +96,7 @@ select_tools() {
 
 show_settings() {
   printf '\nm³ — Settings\n'
-  printf 'Current mode: read-only (fixed).\n'
+  printf 'Current mode: read-only; installation confirmation is simulated.\n'
   printf 'Target platform: Bluefin Linux (initial focus).\n'
   printf 'No settings can be changed in this version.\n'
 }
