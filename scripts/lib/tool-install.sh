@@ -120,10 +120,7 @@ m3_install_tool() {
             if ! command -v flatpak >/dev/null 2>&1; then
               sudo dnf install -y flatpak || return 1
             fi
-            if ! flatpak remotes --columns=name | grep -qx flathub; then
-              printf '  Flathub is not configured. Add it explicitly before installing VSCodium.\n'
-              return 2
-            fi
+            flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo || return 1
             flatpak install --user -y --noninteractive flathub com.vscodium.codium || return 1 ;;
           kind)
             if ! command -v go >/dev/null 2>&1; then
