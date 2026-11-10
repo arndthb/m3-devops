@@ -7,6 +7,7 @@ m3_tool_formula() {
     git) printf 'git' ;;
     go) printf 'go' ;;
     kubectl) printf 'kubernetes-cli' ;;
+    kind) printf 'kind' ;;
     terraform) printf 'hashicorp/tap/terraform' ;;
     *) return 1 ;;
   esac
