@@ -105,7 +105,8 @@ select_tools() {
     old_cursor=$cursor
     old_page_start=$page_start
     case "$key" in
-      
+      "$(printf '\\033')")
+        if IFS= read -rsn1 -t 0.15 next; then
           if [[ "$next" == '[' ]]; then
             IFS= read -rsn1 -t 0.15 next || continue
             case "$next" in
