@@ -57,7 +57,7 @@ m3_install_command() {
   if [[ "$(m3_package_manager)" == dnf ]]; then
     case "$1" in
       distrobox) printf 'sudo dnf install -y distrobox' ; return 0 ;;
-      terraform) printf 'Official HashiCorp Fedora RPM repository; sudo dnf install -y terraform' ; return 0 ;;
+      terraform) printf 'Official HashiCorp release ZIP; verify SHA256; install to ~/.local/bin (no Fedora RPM repo)' ; return 0 ;;
       codium) printf 'flatpak install -y flathub com.vscodium.codium (Flathub remote required)' ; return 0 ;;
       kind) printf 'go install sigs.k8s.io/kind@latest (user-local Go binary)' ; return 0 ;;
     esac
@@ -112,10 +112,43 @@ m3_install_tool() {
           distrobox)
             sudo dnf install -y distrobox || return 1 ;;
           terraform)
-            if [[ ! -f /etc/yum.repos.d/hashicorp.repo ]]; then
-              sudo dnf config-manager addrepo --from-repofile https://rpm.releases.hashicorp.com/fedora/hashicorp.repo || return 1
+            # Fedora's latest release may not have HashiCorp RPM metadata yet.
+            # Install the official upstream binary, verifying its published SHA256.
+            local version arch url tmpdir expected actual
+            for cmd in curl unzip sha256sum python3; do
+              if ! command -v "$cmd" >/dev/null 2>&1; then
+                printf '  Terraform requires %s. Install the prerequisite first.\n' "$cmd"
+                return 2
+              fi
+            done
+            case "$(uname -m)" in
+              x86_64) arch=amd64 ;;
+              aarch64) arch=arm64 ;;
+              *) printf '  Unsupported Terraform architecture.\n'; return 2 ;;
+            esac
+            version="$(curl -fLsS --connect-timeout 10 --max-time 30 https://api.github.com/repos/hashicorp/terraform/releases/latest | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"].lstrip("v"))')" || return 1
+            [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { printf '  Invalid Terraform release version.\n'; return 1; }
+            url="https://releases.hashicorp.com/terraform/$version"
+            tmpdir="$(mktemp -d)" || return 1
+            if ! curl -fLsS --retry 2 "$url/terraform_${version}_linux_${arch}.zip" -o "$tmpdir/terraform.zip" ||
+               ! curl -fLsS --retry 2 "$url/terraform_${version}_SHA256SUMS" -o "$tmpdir/SHA256SUMS"; then
+              rm -rf -- "$tmpdir"; return 1
             fi
-            sudo dnf install -y terraform || return 1 ;;
+            expected="$(awk -v file="terraform_${version}_linux_${arch}.zip" '$2 == file {print $1}' "$tmpdir/SHA256SUMS")"
+            actual="$(sha256sum "$tmpdir/terraform.zip")"
+            actual="${actual%% *}"
+            if [[ -z "$expected" || "$actual" != "$expected" ]]; then
+              printf '  Terraform SHA256 verification failed.\n'
+              rm -rf -- "$tmpdir"; return 1
+            fi
+            if ! unzip -oq "$tmpdir/terraform.zip" terraform -d "$tmpdir" ||
+               ! mkdir -p "$HOME/.local/bin" ||
+               ! install -m 0755 "$tmpdir/terraform" "$HOME/.local/bin/terraform"; then
+              rm -rf -- "$tmpdir"; return 1
+            fi
+            rm -rf -- "$tmpdir"
+            export PATH="$HOME/.local/bin:$PATH"
+            printf '  Terraform %s installed to ~/.local/bin/terraform.\n' "$version" ;;
           codium)
             if ! command -v flatpak >/dev/null 2>&1; then
               sudo dnf install -y flatpak || return 1
