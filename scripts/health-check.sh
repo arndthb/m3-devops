@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Read-only Linux workstation health checks.
 set -u
-ok=0; warn=0; fail=0
+ok=0; warn=0; fail=0; info=0
 status() {
   case "$1" in
+    INFO) printf '  \033[33m○ INFO\033[0m'; info=$((info+1));;
     OK) printf '  \033[32m✓ OK  \033[0m'; ok=$((ok+1));;
     WARN) printf '  \033[33m! WARN\033[0m'; warn=$((warn+1));;
     FAIL) printf '  \033[31m✗ FAIL\033[0m'; fail=$((fail+1));;
@@ -39,11 +40,11 @@ else status WARN 'Podman' 'Not installed'; fi
 if command -v kubectl >/dev/null 2>&1; then
   context=$(kubectl config current-context 2>/dev/null) || context=''
   if [[ -n "$context" ]]; then status OK 'Kubernetes' "Context: $context"
-  else status WARN 'Kubernetes' 'No active context'; fi
+  else status INFO 'Kubernetes' 'Not configured (no active context)'; fi
 else status WARN 'Kubernetes' 'kubectl not installed'; fi
 if command -v git >/dev/null 2>&1; then status OK 'Git' 'Installed'
 else status WARN 'Git' 'Not installed'; fi
 if command -v gh >/dev/null 2>&1; then status OK 'GitHub CLI' 'Installed; auth not checked'
 else status WARN 'GitHub CLI' 'Not installed'; fi
-printf '\n  %d OK · %d warnings · %d critical\n' "$ok" "$warn" "$fail"
+printf '\n  %d OK · %d info · %d warnings · %d critical\n' "$ok" "$info" "$warn" "$fail"
 printf '  Read-only check. No changes made.\n'
