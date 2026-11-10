@@ -19,8 +19,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          shellcheck -s bash -e SC1091 scripts/lib/ui.sh scripts/install-launcher.sh
+          shellcheck -s bash -e SC1091 scripts/lib/ui.sh scripts/lib/tool-install.sh scripts/install-launcher.sh
       - name: Smoke-test interactive menus with PTY
         run: python3 tests/test_m3_menu.py
+      - name: Test curated tool install policy using mocked Homebrew
+        run: python3 tests/test_tool_install.py
       - name: Run read-only diagnostics
         run: bash scripts/check-system.sh
