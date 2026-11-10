@@ -9,6 +9,14 @@ is_installed() {
   command -v "$1" >/dev/null 2>&1
 }
 
+print_header() {
+  local section="${1:-DevOps Workstation Setup}"
+  printf '\033[1;32m'
+  printf '  m³  '
+  printf '\033[0m\033[1m%s\033[0m\n' "$section"
+  printf '  \033[32m────────────────────────────────────\033[0m\n\n'
+}
+
 pause_menu() {
   printf '\nPress Enter to return to the menu...'
   IFS= read -r _ || return 1
@@ -71,8 +79,7 @@ select_tools() {
       if is_installed "${tools[i]}"; then selected[i]=0; fi
     done
     printf '\033[H\033[2J'
-    printf 'm³ — Select DevOps tools\n'
-    printf '\n'
+    print_header 'Select DevOps tools'
     printf '   %-3s %-14s %s\n' '' 'TOOL' 'STATUS'
     for i in "${!tools[@]}"; do
       if (( i == cursor )); then printf ' > '; else printf '   '; fi
@@ -139,7 +146,7 @@ main_menu() {
   fi
   while true; do
     printf '\033[H\033[2J'
-    printf 'm³ — DevOps Workstation Setup\n\n'
+    print_header 'DevOps Workstation Setup'
     for i in "${!items[@]}"; do
       if (( i == cursor )); then
         printf '\033[32m >\033[0m  %s\n' "${items[i]}"
