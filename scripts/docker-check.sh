@@ -26,7 +26,7 @@ m3_docker_status() {
 
 if [[ -t 1 ]]; then
   m3_ui_terminal_size
-  m3_ui_header 'Docker & Compose' 'BLUEFIN · SAFE SETUP GUIDE' "$M3_COLS"
+  m3_ui_header 'Docker & Compose' 'FEDORA / BLUEFIN · SAFE GUIDE' "$M3_COLS"
 else
   printf 'm³ Docker & Compose (read-only)\n\n'
 fi
@@ -73,22 +73,17 @@ if command -v podman-compose >/dev/null 2>&1; then
   m3_docker_status INFO 'Podman Compose' 'Available; separate from Docker Compose'
 fi
 
-printf '\n\033[1m  ◆ BLUEFIN SETUP GUIDANCE\033[0m\n'
+printf '\n\\033[1m  ◆ HOST SETUP GUIDANCE\\033[0m\\n'
 if (( docker_ready && docker_compose )); then
-  printf '  Docker Engine and Compose are available for DevOps projects.\n'
-  printf '  Verify your project manually with: docker compose config\n'
-elif (( docker_ready )); then
-  printf '  Docker Engine is reachable; Docker Compose is still missing.\n'
-  printf '  Use the Bluefin DX-supported Compose integration; do not layer\n'
-  printf '  a generic Fedora Docker installation over the immutable image.\n'
+  printf '  Docker Engine and Compose are ready.\n'
+elif [[ -r /etc/os-release ]] && grep -q '^ID=fedora' /etc/os-release && ! command -v rpm-ostree >/dev/null 2>&1; then
+  printf '  Fedora Workstation: use the official Docker Engine Fedora repository.\n'
+  printf '  https://docs.docker.com/engine/install/fedora/\n'
+  printf '  After installation: sudo systemctl enable --now docker\n'
+  printf '  docker group membership grants root-equivalent access.\n'
 else
-  printf '  Bluefin DX includes Docker Engine in its developer image.\n'
-  printf '  First verify your current image and whether Developer Mode is enabled.\n'
-  printf '  Bluefin desktop guide: https://docs.projectbluefin.io/bluefin-dx/\n'
-  printf '  For *regular* Bluefin, ujust devmode toggles DX mode and needs reboot.\n'
-  printf '  Use ujust dx-group only as documented, then reboot if necessary.\n'
-  printf '  Do NOT run ujust devmode blindly if DX is already enabled.\n'
-  printf '  Check the user service/socket and docker context before changing setup.\n'
+  printf '  Check the OS-specific Docker installation documentation.\n'
+  printf '  Immutable systems must use their supported integration.\n'
 fi
 if command -v systemctl >/dev/null 2>&1; then
   for service in docker.service bluefin-docker.service; do
