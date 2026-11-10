@@ -54,6 +54,10 @@ m3_install_environment() {
 }
 
 m3_install_command() {
+  if [[ "$1" == nerdfont ]]; then
+    printf 'Install JetBrainsMono Nerd Font to ~/.local/share/fonts (curl, unzip, fc-cache)'
+    return 0
+  fi
   if [[ "$(m3_package_manager)" == dnf ]]; then
     local package
     package="$(m3_fedora_package "$1")" || return 1
@@ -76,6 +80,37 @@ m3_install_tool() {
   if [[ "$confirmation" != INSTALL ]]; then
     printf '  No installation performed: exact INSTALL confirmation required.\n'
     return 2
+  fi
+  if [[ "$tool" == nerdfont ]]; then
+    environment="$(m3_install_environment)" || {
+      printf '  Nerd Font: installation blocked: %s.\n' "$environment"
+      return 2
+    }
+    if command -v fc-list >/dev/null 2>&1 && fc-list : family 2>/dev/null | grep -qi 'JetBrainsMono Nerd Font'; then
+      printf '  JetBrainsMono Nerd Font already installed.\n'
+      return 0
+    fi
+    local tmpdir target
+    for cmd in curl unzip fc-cache; do
+      if ! command -v "$cmd" >/dev/null 2>&1; then
+        printf '  Missing prerequisite: %s (Fedora: sudo dnf install -y curl unzip fontconfig)\n' "$cmd"
+        return 2
+      fi
+    done
+    tmpdir="$(mktemp -d)" || return 1
+    target="$HOME/.local/share/fonts/JetBrainsMonoNerd"
+    if ! curl -fLsS --retry 2 --connect-timeout 10 --max-time 180 \
+      'https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip' -o "$tmpdir/font.zip"; then
+      rm -rf -- "$tmpdir"; return 1
+    fi
+    mkdir -p "$target" || { rm -rf -- "$tmpdir"; return 1; }
+    if ! unzip -oq "$tmpdir/font.zip" '*.ttf' -d "$target"; then
+      rm -rf -- "$tmpdir"; return 1
+    fi
+    rm -rf -- "$tmpdir"
+    fc-cache -f "$target"
+    printf '  Nerd Font installed. Select JetBrainsMono Nerd Font in terminal preferences.\n'
+    return 0
   fi
   if [[ "$(m3_package_manager)" == dnf ]]; then
     formula="$(m3_fedora_package "$tool")" || {

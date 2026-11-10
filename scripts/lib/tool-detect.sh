@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 # Shared read-only inventory for m³. Presence is not the same as a working service.
 m3_tool_catalog() {
-  printf '%s\n' git podman distrobox kubectl go terraform codium hermes docker compose kind make curl
+  printf '%s\n' git podman distrobox kubectl go terraform codium hermes docker compose kind make curl nerdfont
 }
 
 m3_tool_label() {
   case "$1" in
+    nerdfont)
+      command -v fc-list >/dev/null 2>&1 && fc-list : family 2>/dev/null | grep -qi "JetBrainsMono Nerd Font" ;;
     codium) printf 'VSCodium' ;;
     compose) printf 'Compose' ;;
     hermes) printf 'Hermes' ;;
+    nerdfont) printf 'JetBrainsMono Nerd Font' ;;
     *) printf '%s' "$1" ;;
   esac
 }
@@ -50,6 +53,7 @@ m3_tool_source() {
         printf 'Docker plugin'
       elif command -v docker-compose >/dev/null 2>&1; then printf 'docker-compose'
       else printf 'podman-compose'; fi ;;
+    nerdfont) printf 'Fontconfig' ;;
     docker) printf 'CLI (engine not checked)' ;;
     *) printf 'CLI' ;;
   esac
@@ -57,6 +61,7 @@ m3_tool_source() {
 
 m3_tool_hint() {
   case "$1" in
+    nerdfont) printf 'Install JetBrainsMono Nerd Font for terminal icons' ;;
     codium) printf 'Review VSCodium Flatpak (com.vscodium.codium)' ;;
     hermes) printf 'Review Hermes agent installation and PATH' ;;
     docker) printf 'Docker engine/CLI differs from Bluefin Podman' ;;

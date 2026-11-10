@@ -196,8 +196,13 @@ show_settings_page() {
     print_header 'Settings'
     mode="$(m3_icon_mode)"
     printf '  Icon style: %s\n' "$mode"
-    printf '  Nerd Font mode requires a Nerd Font selected in your terminal.\n'
-    printf '  No fonts are downloaded or installed by m³.\n\n'
+    if m3_tool_present nerdfont; then
+      printf '  JetBrainsMono Nerd Font: installed (fontconfig).\n'
+    else
+      printf '  JetBrainsMono Nerd Font: missing.\n'
+      printf '  Install it via Tool Manager > Install selected.\n'
+    fi
+    printf '  Select the Nerd Font in your terminal preferences.\n\n'
     printf '  [n] Nerd Font icons   [c] Classic markers   [Enter] Back\n'
     IFS= read -rsn1 key || return 0
     case "$key" in
