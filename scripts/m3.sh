@@ -81,7 +81,7 @@ select_tools() {
       if is_installed "${tools[i]}"; then selected[i]=0; fi
     done
     printf '\033[H\033[2J'
-    print_header 'Select DevOps tools'
+    print_header 'DevOps Tool Manager'
     printf '   %-3s %-14s %s\n' '' 'TOOL' 'STATUS'
     for i in "${!tools[@]}"; do
       if (( i == cursor )); then printf ' > '; else printf '   '; fi
@@ -95,6 +95,11 @@ select_tools() {
     done
     printf '\n'
     if (( cursor == ${#tools[@]} )); then
+      printf '\033[32m >\033[0m     Automatic installation preview\n'
+    else
+      printf '       Automatic installation preview\n'
+    fi
+    if (( cursor == ${#tools[@]} + 1 )); then
       printf '\033[32m >\033[0m     Back to main menu\n'
     else
       printf '       Back to main menu\n'
@@ -109,8 +114,8 @@ select_tools() {
           if [[ "$choice" == '[' ]]; then
             IFS= read -rsn1 -t 0.15 choice || continue
             case "$choice" in
-              A) cursor=$(( (cursor + ${#tools[@]}) % (${#tools[@]} + 1) )) ;;
-              B) cursor=$(( (cursor + 1) % (${#tools[@]} + 1) )) ;;
+              A) cursor=$(( (cursor + ${#tools[@]}) % (${#tools[@]} + 2) )) ;;
+              B) cursor=$(( (cursor + 1) % (${#tools[@]} + 2) )) ;;
             esac
           fi
         else
@@ -124,8 +129,14 @@ select_tools() {
         fi
         ;;
       '')
-        if (( cursor == ${#tools[@]} )); then return; fi
-        printf '\033[H\033[2J'; preview_selected; pause_menu || return
+        if (( cursor == ${#tools[@]} + 1 )); then return; fi
+        printf '\033[H\033[2J'
+        if (( cursor == ${#tools[@]} )); then
+          bash "$SCRIPT_DIR/preview-install.sh" || printf 'Preview failed.\n'
+        else
+          preview_selected
+        fi
+        pause_menu || return
         ;;
     esac
   done
@@ -207,7 +218,7 @@ matrix_easter_egg() {
 
 main_menu() {
   local cursor=0 key next secret_count=0
-  local -a items=('System diagnostics' 'Workstation health check' 'Installation preview' 'Select DevOps tools' 'Settings' 'Info' 'Exit')
+  local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'Settings' 'Info' 'Exit')
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
     return 1
@@ -252,11 +263,10 @@ main_menu() {
         case "$cursor" in
           0) bash "$SCRIPT_DIR/check-system.sh" || printf 'Diagnostics failed.\n'; pause_menu || return 0 ;;
           1) bash "$SCRIPT_DIR/health-check.sh" || printf 'Health check failed.\n'; pause_menu || return 0 ;;
-          2) bash "$SCRIPT_DIR/preview-install.sh" || printf 'Preview failed.\n'; pause_menu || return 0 ;;
-          3) select_tools ;;
-          4) show_settings_page; pause_menu || return 0 ;;
-          5) show_settings; pause_menu || return 0 ;;
-          6) return 0 ;;
+          2) select_tools ;;
+          3) show_settings_page; pause_menu || return 0 ;;
+          4) show_settings; pause_menu || return 0 ;;
+          5) return 0 ;;
         esac
         ;;
     esac
