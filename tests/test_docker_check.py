@@ -32,8 +32,12 @@ def run_case(online):
                 'esac\n'
                 'exit 1\n')
             put_script(binpath, "podman",
-                'printf "podman:%s\\n" "$*" >> "$M3_DOCKER_LOG"\n'
-                '[[ "$1" == info ]]')
+                'printf "podman:%s\n" "$*" >> "$M3_DOCKER_LOG"\n'
+                'case "$1" in\n'
+                '  info) [[ "$3" == "{{.Host.Arch}}" ]] && exit 0 ;; \n'
+                '  compose) [[ "$2" == version ]] && { printf "Docker Compose version v5.7.0\n"; exit 0; } ;;\n'
+                'esac\n'
+                'exit 1')
         env = dict(os.environ)
         env["HOME"] = directory
         env["PATH"] = str(binpath)
@@ -45,12 +49,16 @@ def run_case(online):
         if online:
             assert "Docker Engine and Compose are available" in result.stdout
             assert "Docker CLI plugin available" in result.stdout
+            assert "Compose via Podman" in result.stdout
+            assert "Recommended: keep rootless Podman" in result.stdout
             commands = log.read_text().splitlines()
             assert commands == [
                 "docker:context show",
                 "docker:info --format {{.ServerVersion}}",
                 "docker:compose version",
                 "podman:info --format {{.Host.Arch}}",
+                "podman:info --format {{.Host.Security.Rootless}}",
+                "podman:compose version",
             ], commands
             print("PASS: only read-only Docker/Compose/Podman probes")
         else:
