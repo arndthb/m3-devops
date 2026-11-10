@@ -285,18 +285,23 @@ update_m3() {
   if [[ -n "$status" ]]; then
     printf '  \033[31m✗ Local changes detected. Update cancelled.\033[0m\n'; return 1
   fi
-  printf '\n\033[1m  ◆ INSTALLATION\033[0m\n'
+  printf '\n\033[1m  ◆ INSTALLATION PROGRESS\033[0m\n'
   printf '  ──────────────────────────────────────────────\n'
-  printf '  \033[36m●\033[0m Applying %s new commit(s)...\n' "$count"
-  if git -C "$repo" merge --quiet --ff-only FETCH_HEAD; then
-    printf '  \033[1;32m✓\033[0m Fast-forward completed\n'
-    printf '  \033[1;32m✓\033[0m Installed revision: %s\n' "$remote_rev"
+  printf '    \033[1;32m✓\033[0m  [1/3] Repository checked\n'
+  printf '    \033[1;32m✓\033[0m  [2/3] %s commit(s) ready\n' "$count"
+  printf '    \033[36m●\033[0m  [3/3] Installing %s → %s ...\n' "$local_rev" "$remote_rev"
+  local merge_output
+  if merge_output=$(git -C "$repo" merge --quiet --ff-only FETCH_HEAD 2>&1); then
+    printf '    \033[1;32m✓\033[0m  [3/3] Installation complete\n'
     printf '\n  ┌──────────────────────────────────────────┐\n'
     printf '  │  \033[1;32m✓ UPDATE INSTALLED\033[0m                      │\n'
+    printf '  │  New revision: \033[1;32m%-7s\033[0m                 │\n' "$remote_rev"
     printf '  │  Restart m³ to load the new version.     │\n'
     printf '  └──────────────────────────────────────────┘\n'
   else
-    printf '\n  \033[31m✗ Update failed; review Git output.\033[0m\n'; return 1
+    printf '    \033[31m✗\033[0m  [3/3] Installation failed\n'
+    printf '    %s\n' "$merge_output"
+    return 1
   fi
 }
 
