@@ -45,9 +45,11 @@ Run `m3` to open the terminal interface. The current menu includes:
 
 The project manager searches common directories (`~/Projects`, `~/projects`, `~/Developer`, `~/Code`, `~/Documents/DevOps`, and `~`) up to two directory levels deep. It recognizes Git repositories and projects with `compose.yaml`, `compose.yml`, `docker-compose.yml`, or `docker-compose.yaml`. Backup-like directory names are excluded.
 
-The interactive list shows each project's name, Git branch/status, and Compose file. An asterisk (`*`) indicates local Git changes, including untracked files; `?` indicates an unavailable status. The details view displays the full path, branch, origin, up to three recent commits, a short working-tree status, the Compose filename, and top-level entries.
+The project browser shows the name, Git branch/status, and Compose file in a **paged list**, limited to the terminal's visible height. An asterisk (`*`) indicates local Git changes (including untracked files); `?` indicates unavailable status. A selected project's **scrollable details** include its full path, branch, origin, up to three recent commits, a short working-tree status, the Compose file and top-level entries.
 
-Use **↑/↓** to select a project, **Enter** to open details, **Enter** again to return to the project list, and **Esc** to return to the main menu. The project manager is **read-only**: it does not modify repositories, install tools, or start containers. Git information reflects the last scan, not continuous monitoring.
+Use **↑/↓** to select a project, **Enter** to open details, **Enter** again to return to the list, and **Esc** to return to the main menu. Press **/** to search project names and paths, **F** to cycle through *All / Git / Compose / Changed*, **C** to clear the search, or **R** to rescan the filesystem. Empty results remain interactive so you can adjust the filter. The project manager is **read-only**: it does not modify repositories, install tools, or start containers. Git status is a snapshot from the last scan, not continuous monitoring.
+
+Menu rendering helpers for Project Manager and Container Manager are shared in `scripts/lib/ui.sh`; this keeps their headers, colors, and selection rows consistent. The other menus will be migrated separately.
 
 ## Roadmap
 
