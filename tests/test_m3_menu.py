@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """PTY regression checks for the m³ interactive Bash menu (no network)."""
 import errno
+import fcntl
+import struct
+import termios
 import os
 from pathlib import Path
 import pty
@@ -15,9 +18,11 @@ SCRIPT = ROOT / "scripts" / "m3.sh"
 
 
 class Terminal:
-    def __init__(self, script):
+    def __init__(self, script, rows=24, cols=80):
         self.pid, self.fd = pty.fork()
         if self.pid == 0:
+            fcntl.ioctl(0, termios.TIOCSWINSZ,
+                        struct.pack('HHHH', rows, cols, 0, 0))
             os.execv("/bin/bash", ["bash", str(script)])
         self.output = bytearray()
 
@@ -52,6 +57,22 @@ class Terminal:
             pass
         os.waitpid(self.pid, 0)
         os.close(self.fd)
+
+
+def test_main_menu_layout():
+    # Verify row positions and incremental redraws in both densities.
+    for rows, cols, next_row in [(24, 80, 9), (40, 100, 10)]:
+        term = Terminal(SCRIPT, rows=rows, cols=cols)
+        try:
+            term.expect(b"DevOps Workstation Setup")
+            term.expect(b"BUILD")
+            initial = len(term.output)
+            term.send(b"\x1b[B")
+            term.expect(("\x1b[%d;1H" % next_row).encode(),
+                        timeout=5, after=initial)
+            print("PASS: %d-row layout arrow navigation" % rows)
+        finally:
+            term.close()
 
 
 def test_info_return():
@@ -104,5 +125,6 @@ def test_no_update_return():
 
 
 if __name__ == "__main__":
+    test_main_menu_layout()
     test_info_return()
     test_no_update_return()
