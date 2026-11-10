@@ -256,7 +256,7 @@ update_m3() {
   printf '\n\033[1m  ◆ CHANGELOG\033[0m\n'
   printf '  ──────────────────────────────────────────────\n'
   if [[ "$local_rev" == "$remote_rev" ]]; then
-    printf '  No new commits.\n\n'
+    printf '    No new commits.\n\n'
     printf '  Latest commit\n'
     git -C "$repo" log -1 --format='    %h  %s' HEAD 2>/dev/null
     printf '\n  ┌──────────────────────────────────────────┐\n'
