@@ -202,7 +202,7 @@ matrix_easter_egg() {
   print_header 'Secret mode unlocked'
   printf '\033[1;32m  WAKE UP, DEVOPS.\033[0m\n\n'
   printf '%s\n' '  There is no cloud.' "  It's just someone else's computer."
-  sleep 2
+  sleep 7
 }
 
 main_menu() {
