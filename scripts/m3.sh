@@ -120,22 +120,53 @@ show_settings() {
   printf 'No settings can be changed in this version.\n'
 }
 
-while true; do
-  printf '\n%s\n' 'm³ — DevOps Workstation Setup' \
-    '  [1] System diagnostics' \
-    '  [2] Installation preview (all missing tools)' \
-    '  [3] Select DevOps tools' \
-    '  [4] Settings (read-only)' \
-    '  [0] Exit'
-  printf 'Select an option: '
-  IFS= read -r choice || { printf '\n'; break; }
-  case "$choice" in
-    1) bash "$SCRIPT_DIR/check-system.sh" || printf 'Diagnostics failed.\n'; pause_menu || break ;;
-    2) bash "$SCRIPT_DIR/preview-install.sh" || printf 'Preview failed.\n'; pause_menu || break ;;
-    3) select_tools ;;
-    4) show_settings; pause_menu || break ;;
-    0) break ;;
-    *) printf 'Invalid option. Choose 0–4.\n' ;;
-  esac
-done
+
+main_menu() {
+  local cursor=0 key next
+  local -a items=('System diagnostics' 'Installation preview' 'Select DevOps tools' 'Settings' 'Exit')
+  if [[ ! -t 0 || ! -t 1 ]]; then
+    printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
+    return 1
+  fi
+  while true; do
+    printf '\033[H\033[2J'
+    printf 'm³ — DevOps Workstation Setup\n\n'
+    for i in "${!items[@]}"; do
+      if (( i == cursor )); then
+        printf '\033[32m >\033[0m  %s\n' "${items[i]}"
+      else
+        printf '    %s\n' "${items[i]}"
+      fi
+    done
+    printf '\n↑/↓ Navigate  Enter Select  Esc Exit\n'
+    IFS= read -rsn1 key || return 0
+    case "$key" in
+      $'\033')
+        if IFS= read -rsn1 -t 0.15 next; then
+          if [[ "$next" == '[' ]]; then
+            IFS= read -rsn1 -t 0.15 next || continue
+            case "$next" in
+              A) cursor=$(( (cursor + ${#items[@]} - 1) % ${#items[@]} )) ;;
+              B) cursor=$(( (cursor + 1) % ${#items[@]} )) ;;
+            esac
+          fi
+        else
+          return 0
+        fi
+        ;;
+      '')
+        printf '\033[H\033[2J'
+        case "$cursor" in
+          0) bash "$SCRIPT_DIR/check-system.sh" || printf 'Diagnostics failed.\n'; pause_menu || return 0 ;;
+          1) bash "$SCRIPT_DIR/preview-install.sh" || printf 'Preview failed.\n'; pause_menu || return 0 ;;
+          2) select_tools ;;
+          3) show_settings; pause_menu || return 0 ;;
+          4) return 0 ;;
+        esac
+        ;;
+    esac
+  done
+}
+
+main_menu
 printf 'Goodbye from m³.\n'
