@@ -53,9 +53,34 @@ for tool in git podman distrobox kubectl go terraform; do
       printf '  %-12s %-12s %-13s %s\n' "$tool" "$version" 'Homebrew' 'Unable to check'
     fi
   else
-    printf '  %-12s %-12s %-13s %s\n' "$tool" "$version" 'Other/unknown' 'Update not verified'
+    source='Unmanaged'
+    update='No package source found'
+    executable=$(command -v "$tool")
+    resolved=$(readlink -f "$executable" 2>/dev/null) || resolved="$executable"
+    if command -v rpm >/dev/null 2>&1; then
+      package=$(rpm -qf --qf '%{NAME}' "$resolved" 2>/dev/null) || package=''
+      if [[ -n "$package" ]]; then
+        source='RPM / Bluefin'
+        update='OS update channel'
+        # A staged deployment is evidence of an OS update, not proof this tool changed.
+        if command -v rpm-ostree >/dev/null 2>&1; then
+          update='Check via ujust update'
+        fi
+      fi
+    fi
+    if [[ "$source" == Unmanaged ]]; then
+      case "$resolved" in
+        "$HOME"/.local/share/mise/*|"$HOME"/.local/share/asdf/*)
+          source='Version mgr'; update='Check manager';;
+        /var/lib/flatpak/*|"$HOME"/.local/share/flatpak/*)
+          source='Flatpak'; update='Check flatpak';;
+        /usr/local/*|"$HOME"/.local/bin/*)
+          source='Manual/local'; update='Check upstream';;
+      esac
+    fi
+    printf '  %-12s %-12s %-13s %s\n' "$tool" "$version" "$source" "$update"
   fi
 done
 printf '\n  Homebrew checks use local package metadata.\n'
-printf '  Other installation sources need separate checks.\n'
+printf '  Bluefin OS tools update together via the OS update channel.\n  Source detection does not prove an update is available.\n'
 printf '  No network access or package changes requested.\n'
