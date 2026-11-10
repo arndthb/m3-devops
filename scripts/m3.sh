@@ -28,7 +28,10 @@ preview_selected() {
       if ! command -v brew >/dev/null 2>&1; then
         printf '            Homebrew not detected; installation method needs review.\n'
       elif [[ "$tool" == terraform ]]; then
-        printf '            Terraform: verify the supported Homebrew tap/formula before installing.\n'
+        printf '            Suggested (NOT executed): brew tap hashicorp/tap\n'
+        printf '            Suggested (NOT executed): brew install hashicorp/tap/terraform\n'
+      elif [[ "$tool" == podman || "$tool" == distrobox ]]; then
+        printf '            System-integrated tool: check Bluefin image; no brew suggestion.\n'
       else
         printf '            Suggested (NOT executed): brew install %s\n' "$tool"
       fi
