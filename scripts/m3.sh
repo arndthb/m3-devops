@@ -132,10 +132,25 @@ select_tools() {
 }
 
 show_settings() {
-  printf '\nm³ — Settings\n'
-  printf 'Current mode: read-only; installation confirmation is simulated.\n'
-  printf 'Target platform: Bluefin Linux (initial focus).\n'
-  printf 'No settings can be changed in this version.\n'
+  local revision='unavailable'
+  if command -v git >/dev/null 2>&1; then
+    revision="$(git -C "$SCRIPT_DIR/.." rev-parse --short HEAD 2>/dev/null)" || revision='unavailable'
+  fi
+  print_header 'Settings & About'
+  printf '\033[1m  ABOUT m³\033[0m\n'
+  printf '  %-15s %s\n' 'Version' 'v0.1 (development)'
+  printf '  %-15s %s\n' 'Revision' "$revision"
+  printf '  %-15s %s\n' 'Platform' 'Linux · Bluefin first'
+  printf '  %-15s %s\n' 'Mode' 'Read-only / installation simulation'
+  printf '  %-15s %s\n\n' 'License' 'MIT'
+  printf '\033[1m  PROJECT\033[0m\n'
+  printf '  %-15s %s\n' 'Repository' 'github.com/arndthb/m3-devops'
+  printf '  %-15s %s\n\n' 'Updates' 'm3 update'
+  printf '\033[1m  AUTHOR\033[0m\n'
+  printf '  Arndt H. Bohrenkämper\n'
+  printf '  GitHub: github.com/arndthb\n'
+  printf '  Independent open-source project · 2026\n\n'
+  printf '\033[2m  No configuration changes are available yet.\033[0m\n'
 }
 
 
