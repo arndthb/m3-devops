@@ -106,6 +106,7 @@ def test_readiness_menu_return():
         bindir = Path(d) / "bin"
         bindir.mkdir()
         (bindir / "dirname").symlink_to("/usr/bin/dirname")
+        (bindir / "bash").symlink_to("/bin/bash")
         env = dict(os.environ)
         env["HOME"] = d
         env["PATH"] = str(bindir)
