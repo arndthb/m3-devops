@@ -100,6 +100,36 @@ def test_tool_manager_paging():
             term.close()
 
 
+def test_readiness_menu_return():
+    # Isolate PATH: the CI runner might have a slow Podman/Docker daemon.
+    with tempfile.TemporaryDirectory() as d:
+        bindir = Path(d) / "bin"
+        bindir.mkdir()
+        (bindir / "dirname").symlink_to("/usr/bin/dirname")
+        (bindir / "bash").symlink_to("/bin/bash")
+        env = dict(os.environ)
+        env["HOME"] = d
+        env["PATH"] = str(bindir)
+        term = Terminal(SCRIPT, rows=24, cols=80, env=env)
+        try:
+            term.expect(b"DevOps Workstation Setup")
+            term.send(b"\x1b[B" * 2 + b"\r")
+            term.expect(b"DevOps Tool Manager")
+            at = len(term.output)
+            term.send(b"\x1b[B" * 15)
+            term.expect(b"Workstation readiness", timeout=5, after=at)
+            at = len(term.output)
+            term.send(b"\r")
+            term.expect(b"KUBERNETES TOOLCHAIN", timeout=8, after=at)
+            term.expect(b"Inspection only:", after=at, timeout=8)
+            at = len(term.output)
+            term.send(b"\r")
+            term.expect(b"DevOps Tool Manager", timeout=5, after=at)
+            print("PASS: readiness submenu opens and returns without modifications")
+        finally:
+            term.close()
+
+
 def test_settings_roundtrip():
     # The icon preference is isolated to a temporary HOME.
     with tempfile.TemporaryDirectory() as d:
@@ -452,6 +482,7 @@ def test_no_update_return():
 if __name__ == "__main__":
     test_main_menu_layout()
     test_tool_manager_paging()
+    test_readiness_menu_return()
     test_container_manager()
     test_settings_roundtrip()
     test_tool_manager_readonly()

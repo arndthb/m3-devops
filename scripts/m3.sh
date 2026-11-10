@@ -45,7 +45,7 @@ pause_menu() {
 select_tools() {
   local key next i cursor=0 page_size rows cols page_start row index total
   local name state line checked tool
-  local -a actions=('Automatic installation preview' 'Update Check' 'Back to main menu')
+  local -a actions=('Automatic installation preview' 'Update Check' 'Workstation readiness' 'Back to main menu')
   total=$(( ${#tools[@]} + ${#actions[@]} ))
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'Interactive selection requires a terminal.\n'
@@ -118,6 +118,8 @@ select_tools() {
           bash "$SCRIPT_DIR/preview-install.sh" || printf 'Preview failed.\n'
         elif ((cursor==${#tools[@]}+1)); then
           bash "$SCRIPT_DIR/update-check.sh" || printf 'Update check failed.\n'
+        elif ((cursor==${#tools[@]}+2)); then
+          bash "$SCRIPT_DIR/setup-check.sh" || printf 'Readiness check failed.\n'
         else
           preview_selected
         fi
