@@ -5,6 +5,10 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 tools=(git podman distrobox kubectl go terraform)
 selected=(0 0 0 0 0 0)
 
+is_installed() {
+  command -v "$1" >/dev/null 2>&1
+}
+
 pause_menu() {
   printf '\nPress Enter to return to the menu...'
   IFS= read -r _ || return 1
@@ -19,7 +23,7 @@ preview_selected() {
     [[ "${selected[i]}" == 1 ]] || continue
     count=$((count + 1))
     tool="${tools[i]}"
-    if command -v "$tool" >/dev/null 2>&1; then
+    if is_installed "$tool"; then
       printf '[installed] %s — no action needed\n' "$tool"
     else
       missing=$((missing + 1))
@@ -62,18 +66,25 @@ select_tools() {
     return
   fi
   while true; do
+    # Recheck on every redraw so newly available tools are locked immediately.
+    for i in "${!tools[@]}"; do
+      if is_installed "${tools[i]}"; then selected[i]=0; fi
+    done
     printf '\033[H\033[2J'
     printf 'm³ — Select DevOps tools\n'
     printf '\n'
     for i in "${!tools[@]}"; do
       if (( i == cursor )); then printf ' > '; else printf '   '; fi
-      if [[ "${selected[i]}" == 1 ]]; then
-        printf '[x] %s\n' "${tools[i]}"
+      if is_installed "${tools[i]}"; then
+        printf '[-] %s (installed)\n' "${tools[i]}"
+      elif [[ "${selected[i]}" == 1 ]]; then
+        printf '[x] %s (missing)\n' "${tools[i]}"
       else
-        printf '[ ] %s\n' "${tools[i]}"
+        printf '[ ] %s (missing)\n' "${tools[i]}"
       fi
     done
-    printf '\n↑/↓ Navigate  Space Toggle  Enter Preview  Esc Back\n'
+    printf '\n[-] Installed / locked   [x] Selected   [ ] Available\n'
+    printf '↑/↓ Navigate  Space Toggle  Enter Preview  Esc Back\n'
     IFS= read -rsn1 key || return
     case "$key" in
       $'\033')
@@ -91,7 +102,11 @@ select_tools() {
           return
         fi
         ;;
-      ' ') selected[cursor]=$((1 - selected[cursor])) ;;
+      ' ')
+        if ! is_installed "${tools[cursor]}"; then
+          selected[cursor]=$((1 - selected[cursor]))
+        fi
+        ;;
       '') printf '\033[H\033[2J'; preview_selected; pause_menu || return ;;
     esac
   done
