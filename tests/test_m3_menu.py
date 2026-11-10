@@ -203,6 +203,35 @@ def test_tool_manager_readonly():
             term.close()
 
 
+def test_selected_docker_opens_manual_bluefin_guide():
+    with tempfile.TemporaryDirectory() as d:
+        bindir = Path(d) / "bin"
+        bindir.mkdir()
+        (bindir / "dirname").symlink_to("/usr/bin/dirname")
+        (bindir / "bash").symlink_to("/bin/bash")
+        env = dict(os.environ)
+        env["PATH"] = str(bindir)
+        env["HOME"] = d
+        term = Terminal(SCRIPT, env=env)
+        try:
+            term.expect(b"DevOps Workstation Setup")
+            term.send(b"\x1b[B" * 2 + b"\r")
+            term.expect(b"DevOps Tool Manager")
+            # Docker is item 9 in the 13-tool inventory.
+            term.send(b"\x1b[B" * 8 + b" " + b"\r")
+            term.expect(b"SELECTED TOOLS", timeout=5)
+            term.expect(b"MANUAL", timeout=5)
+            term.expect(b"Opening the Bluefin-specific Docker & Compose guide", timeout=5)
+            term.expect(b"BLUEFIN", timeout=5)
+            term.expect(b"No packages installed", timeout=5)
+            at = len(term.output)
+            term.send(b"\r")
+            term.expect(b"DevOps Tool Manager", timeout=5, after=at)
+            print("PASS: selecting Docker opens the safe Bluefin guide, not a fake installer")
+        finally:
+            term.close()
+
+
 def test_confirmed_tool_install_via_menu():
     # A restricted PATH makes Go missing and ensures only our fake brew can run.
     with tempfile.TemporaryDirectory() as d:
@@ -516,6 +545,7 @@ if __name__ == "__main__":
     test_container_manager()
     test_settings_roundtrip()
     test_tool_manager_readonly()
+    test_selected_docker_opens_manual_bluefin_guide()
     test_confirmed_tool_install_via_menu()
     test_terraform_requires_explicit_confirmation()
     test_tool_batch_stops_after_first_failure()

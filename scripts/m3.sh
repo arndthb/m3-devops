@@ -403,7 +403,7 @@ main_menu() {
 
 preview_selected() {
   local i tool count=0 answer formula environment failures=0
-  local -a ready=()
+  local -a ready=() manual=()
   printf '\n\033[1m  ◆ SELECTED TOOLS — REVIEW\033[0m\n'
   printf '  Only tools explicitly selected with Space are considered.\n'
   printf '  No changes happen until you type INSTALL.\n\n'
@@ -424,6 +424,7 @@ preview_selected() {
       fi
     else
       printf '  %-14s \033[1;33mMANUAL\033[0m    %s\n' "$(m3_tool_label "$tool")" "$(m3_tool_hint "$tool")"
+      manual+=("$tool")
     fi
   done
 
@@ -433,6 +434,12 @@ preview_selected() {
   fi
   printf '\n  %d selected · %d approved for Homebrew installation\n' "$count" "${#ready[@]}"
   if (( ${#ready[@]} == 0 )); then
+    if [[ " ${manual[*]} " == *" docker "* ]]; then
+      printf '  Docker is managed by the Bluefin image, not installed as a Homebrew formula.\n'
+      printf '  Opening the Bluefin-specific Docker & Compose guide...\n\n'
+      bash "$SCRIPT_DIR/docker-check.sh" || printf '  Docker guide could not be opened.\n'
+      return 0
+    fi
     printf '  No supported installation actions. Nothing changed.\n'
     return 0
   fi
