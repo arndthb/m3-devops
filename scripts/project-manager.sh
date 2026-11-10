@@ -85,7 +85,7 @@ if [[ -t 0 && -t 1 && ${#projects[@]} -gt 0 ]]; then
       printf '%-28.28s %-18.18s %s\n' "${dir#"$HOME"/}" "${project_git[i]}" "${project_compose[i]}"
     done
     printf '\n  * = local changes · ? = status unavailable\n'
-    printf '  ↑/↓ Select  Enter Details  Esc Back\n'
+    printf '  ↑/↓ Select  Enter Details  R Rescan  Esc Back\n'
     IFS= read -rsn1 key || break
     case "$key" in
       $'\033')
@@ -132,7 +132,7 @@ if [[ -t 0 && -t 1 && ${#projects[@]} -gt 0 ]]; then
             $'\033') exit 0 ;;
           esac
         done ;;
-      q|Q) break ;;
+      r|R) exec bash "$0" ;;\n      q|Q) break ;;
     esac
   done
 fi
