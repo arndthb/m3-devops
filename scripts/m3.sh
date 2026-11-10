@@ -4,8 +4,8 @@ set -u
 
 # Keep the terminal cursor out of the interactive menu.
 if [[ -t 1 ]]; then
-  printf '\\033[?25l'
-  trap 'printf "\\033[?25h"' EXIT HUP INT TERM
+  printf '\033[?25l'
+  trap 'printf "\033[?25h"' EXIT HUP INT TERM
 fi
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 tools=(git podman distrobox kubectl go terraform)
@@ -165,7 +165,7 @@ print_link() {
   # OSC 8 hyperlinks are clickable in supporting terminal emulators.
   # The full URL remains visible and can be copied in other terminals.
   if [[ -t 1 && "${TERM:-dumb}" != dumb ]]; then
-    printf '\033]8;;%s\033\\\033[4;34m%s\033[0m\033]8;;\033\\' "$url" "$url"
+    printf '\033]8;;%s\033\\033[4;34m%s\033[0m\033]8;;\033\\' "$url" "$url"
   else
     printf '%s' "$url"
   fi
