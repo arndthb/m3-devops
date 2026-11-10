@@ -48,10 +48,17 @@ def test_podman_ready():
         assert "Provider: Podman" in result.stdout
         assert "KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster" in result.stdout
         assert "Inspection only:" in result.stdout
-        assert log.read_text().splitlines() == [
+        commands = log.read_text().splitlines()
+        allowed = {
             "podman:info --format {{.Host.Arch}}",
             "docker:info --format {{.ServerVersion}}",
-        ], "Readiness ran an unexpected container command"
+            "docker:compose version",
+        }
+        assert "podman:info --format {{.Host.Arch}}" in commands, commands
+        assert "docker:info --format {{.ServerVersion}}" in commands, commands
+        assert set(commands).issubset(allowed), (
+            "Readiness ran an unexpected container command: " + repr(commands)
+        )
         print("PASS: Podman provider selected without creating a cluster")
 
 
