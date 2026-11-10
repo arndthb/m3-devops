@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # m³ interactive menu — read-only; confirmation is simulated, no installs.
 set -u
+
+# Keep the terminal cursor out of the interactive menu.
+if [[ -t 1 ]]; then
+  printf '\\033[?25l'
+  trap 'printf "\\033[?25h"' EXIT HUP INT TERM
+fi
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 tools=(git podman distrobox kubectl go terraform)
 selected=(0 0 0 0 0 0)
