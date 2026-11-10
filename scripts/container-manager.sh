@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # m³ Container Manager — Podman inspection only; no mutations.
 set -u
+
+# Keep the terminal cursor out of the interactive menu.
+if [[ -t 1 ]]; then
+  printf '\\033[?25l'
+  trap 'printf "\\033[?25h"' EXIT HUP INT TERM
+fi
 header() {
   printf '\033[H\033[2J'
   printf '\033[32m  ╭──────────────────────────────────────────────╮\033[0m\n'
