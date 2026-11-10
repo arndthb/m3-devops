@@ -31,7 +31,7 @@ m3_fedora_package() {
     git) printf 'git' ;;
     go) printf 'golang' ;;
     kubectl) printf 'kubernetes-client' ;;
-    terraform) printf 'terraform' ;;
+    terraform) return 1 ;; # Requires verified HashiCorp RPM repository
     *) return 1 ;;
   esac
 }
