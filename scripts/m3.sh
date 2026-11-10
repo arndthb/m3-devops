@@ -237,7 +237,7 @@ update_m3() {
   if [[ "$local_rev" == "$remote_rev" ]]; then
     printf '    No new commits.\n\n'
     printf '    Latest commit\n'
-    git -C "$repo" log -1 --format='    %h  %s' HEAD 2>/dev/null
+    git --no-pager -C "$repo" log -1 --format='    %h  %s' HEAD 2>/dev/null
     printf '\n  ┌──────────────────────────────────────────┐\n'
     printf '  │  \033[1;32m✓ ALL UP TO DATE\033[0m                        │\n'
     printf '  │  No new updates available.               │\n'
@@ -250,7 +250,7 @@ update_m3() {
   fi
   count=$(git -C "$repo" rev-list --count HEAD..FETCH_HEAD 2>/dev/null) || return 1
   printf '  \033[1;32m%s new commit(s)\033[0m · newest first\n\n' "$count"
-  git -C "$repo" log -8 --format='  %h  %s' HEAD..FETCH_HEAD 2>/dev/null
+  git --no-pager -C "$repo" log -8 --format='  %h  %s' HEAD..FETCH_HEAD 2>/dev/null
   if (( count > 8 )); then printf '  ... and %s more\n' "$((count - 8))"; fi
   printf '\n  ┌──────────────────────────────────────────┐\n'
   printf '  │  \033[1;33m● UPDATE AVAILABLE\033[0m                      │\n'
