@@ -304,11 +304,14 @@ main_menu() {
       printf '    \033[2m%s\033[0m  %s' "${icons[index]}" "${items[index]}"
     fi
   }
-  printf '\033[H\033[2J'
-  print_header 'DevOps Workstation Setup'
-  if [[ "$(m3_icon_mode)" == nerd ]]; then icons=("${nerd_icons[@]}"); else icons=('[S]' '[H]' '[T]' '[P]' '[C]' '[U]' '[G]' '[i]' '[X]'); fi
-  for i in "${!items[@]}"; do render_menu_row "$i"; printf '\n'; done
-  printf '\n↑/↓ Navigate  Enter Select\n'
+  render_main_menu() {
+    printf '\033[?25l\033[H\033[2J'
+    print_header 'DevOps Workstation Setup'
+    if [[ "$(m3_icon_mode)" == nerd ]]; then icons=("${nerd_icons[@]}"); else icons=('[S]' '[H]' '[T]' '[P]' '[C]' '[U]' '[G]' '[i]' '[X]'); fi
+    for i in "${!items[@]}"; do render_menu_row "$i"; printf '\n'; done
+    printf '\n↑/↓ Navigate  Enter Select\n'
+  }
+  render_main_menu
   while true; do
     IFS= read -rsn1 key || return 0
     if [[ "$key" == m ]]; then
@@ -316,6 +319,7 @@ main_menu() {
       if (( secret_count == 3 )); then
         matrix_easter_egg
         secret_count=0
+        render_main_menu
       fi
       continue
     fi
@@ -347,6 +351,7 @@ main_menu() {
           7) show_settings; pause_menu || return 0 ;;
           8) return 0 ;;
         esac
+        render_main_menu
         ;;
     esac
   done
