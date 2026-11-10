@@ -8,6 +8,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate shell syntax
-        run: bash -n scripts/check-system.sh
+        run: |
+          bash -n scripts/check-system.sh
+          bash -n scripts/m3.sh
       - name: Run read-only diagnostics
         run: bash scripts/check-system.sh
