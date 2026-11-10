@@ -54,6 +54,14 @@ m3_install_environment() {
 }
 
 m3_install_command() {
+  if [[ "$(m3_package_manager)" == dnf ]]; then
+    case "$1" in
+      distrobox) printf 'sudo dnf install -y distrobox' ; return 0 ;;
+      terraform) printf 'Official HashiCorp Fedora RPM repository; sudo dnf install -y terraform' ; return 0 ;;
+      codium) printf 'flatpak install -y flathub com.vscodium.codium (Flathub remote required)' ; return 0 ;;
+      kind) printf 'go install sigs.k8s.io/kind@latest (user-local Go binary)' ; return 0 ;;
+    esac
+  fi
   if [[ "$1" == docker || "$1" == compose ]] && [[ "$(m3_package_manager)" == dnf ]]; then
     if [[ "$1" == docker ]]; then
       printf 'Official Docker Fedora repository; DNF install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin; enable docker service'
@@ -88,6 +96,46 @@ m3_install_tool() {
   if [[ "$confirmation" != INSTALL ]]; then
     printf '  No installation performed: exact INSTALL confirmation required.\n'
     return 2
+  fi
+  if [[ "$(m3_package_manager)" == dnf ]]; then
+    case "$tool" in
+      distrobox|terraform|codium|kind)
+        environment="$(m3_install_environment)" || {
+          printf '  %s: installation blocked: %s.\n' "$tool" "$environment"
+          return 2
+        }
+        if m3_tool_present "$tool"; then
+          printf '  %s already installed.\n' "$tool"
+          return 0
+        fi
+        case "$tool" in
+          distrobox)
+            sudo dnf install -y distrobox || return 1 ;;
+          terraform)
+            if [[ ! -f /etc/yum.repos.d/hashicorp.repo ]]; then
+              sudo dnf config-manager addrepo --from-repofile https://rpm.releases.hashicorp.com/fedora/hashicorp.repo || return 1
+            fi
+            sudo dnf install -y terraform || return 1 ;;
+          codium)
+            if ! command -v flatpak >/dev/null 2>&1; then
+              sudo dnf install -y flatpak || return 1
+            fi
+            flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo || return 1
+            flatpak install --user -y --noninteractive flathub com.vscodium.codium || return 1 ;;
+          kind)
+            if ! command -v go >/dev/null 2>&1; then
+              printf '  Go is required for kind installation. Select go first.\n'
+              return 2
+            fi
+            mkdir -p "$HOME/.local/bin" || return 1
+            GOBIN="$HOME/.local/bin" go install sigs.k8s.io/kind@latest || return 1 ;;
+        esac
+        m3_tool_present "$tool" || {
+          printf '  %s installed but not detected; check PATH and restart terminal.\n' "$tool"
+          return 1
+        }
+        return 0 ;;
+    esac
   fi
   if [[ "$tool" == docker || "$tool" == compose ]]; then
     environment="$(m3_install_environment)" || {
