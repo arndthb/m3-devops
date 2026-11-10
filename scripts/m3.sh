@@ -192,12 +192,209 @@ show_settings() {
 }
 
 
+m3_icon_mode() {
+  local config="$HOME/.config/m3/icon-mode"
+  if [[ -r "$config" ]] && [[ "$(head -n 1 "$config")" == nerd ]]; then
+    printf nerd
+  else
+    printf classic
+  fi
+}
+
 show_settings_page() {
-  print_header 'Settings'
-  printf '\033[1m  SETTINGS\033[0m\n'
-  printf '  Installation mode: read-only (simulation only)\n'
-  printf '  Target platform: Bluefin Linux\n'
-  printf '  No configurable options are available yet.\n'
+  local key mode config="$HOME/.config/m3/icon-mode"
+  while true; do
+    printf '\033[H\033[2J'
+    print_header 'Settings'
+    mode="$(m3_icon_mode)"
+    printf '  Icon style: %s\n' "$mode"
+    printf '  Nerd Font mode requires a Nerd Font selected in your terminal.\n'
+    printf '  No fonts are downloaded or installed by m³.\n\n'
+    printf '  [n] Nerd Font icons   [c] Classic markers   [Enter] Back\n'
+    IFS= read -rsn1 key || return 0
+    case "$key" in
+      n|N|c|C)
+        mkdir -p "$HOME/.config/m3" || return 1
+        if [[ "$key" == n || "$key" == N ]]; then printf 'nerd\n' > "$config"
+        else printf 'classic\n' > "$config"; fi ;;
+      '') return 0 ;;
+      
+
+
+
+matrix_easter_egg() {
+  local frame row col char
+  printf '\033[?25l'
+  for ((frame=0; frame<28; frame++)); do
+    printf '\033[H\033[2J\033[1;32m  m³ // THE MATRIX\033[0m\n\n'
+    for ((row=0; row<12; row++)); do
+      printf '  '
+      for ((col=0; col<48; col++)); do
+        if (( (row + frame + col * 7) % 13 < 5 )); then
+          char=$((RANDOM % 2))
+          printf '\033[32m%s' "$char"
+        else
+          printf ' '
+        fi
+      done
+      printf '\033[0m\n'
+    done
+    sleep 0.09
+  done
+  printf '\033[H\033[2J\033[?25h'
+  print_header 'Secret mode unlocked'
+  printf '\033[1;32m  WAKE UP, DEVOPS.\033[0m\n\n'
+  printf '%s\n' '  There is no cloud.' "  It's just someone else's computer."
+  sleep 7
+}
+
+update_m3() {
+  M3_RESTART_REQUIRED=0
+  local repo branch local_rev remote_rev answer status count
+  repo="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+  printf '\033[H\033[2J'
+  print_header 'Check m³ Updates'
+  printf '\033[1m  ◆ M3 UPDATE CENTER\033[0m\n'
+  printf '  Channel: \033[36mmain\033[0m   Source: GitHub\n'
+  printf '  ──────────────────────────────────────────────\n'
+  if ! command -v git >/dev/null 2>&1 || [[ ! -d "$repo/.git" ]]; then
+    printf '  \033[31m✗ Git checkout unavailable.\033[0m\n'; return 1
+  fi
+  branch=$(git -C "$repo" symbolic-ref --quiet --short HEAD 2>/dev/null) || branch=''
+  if [[ "$branch" != main ]]; then
+    printf '  \033[31m✗ Expected main; current: %s\033[0m\n' "${branch:-detached}"; return 1
+  fi
+  local_rev=$(git -C "$repo" rev-parse --short=7 HEAD 2>/dev/null) || return 1
+  printf '\n  \033[36m◌ Checking for updates...\033[0m\n'
+  if ! git -C "$repo" fetch --quiet origin main; then
+    printf '  \033[31m✗ Could not check for updates.\033[0m\n'; return 1
+  fi
+  remote_rev=$(git -C "$repo" rev-parse --short=7 FETCH_HEAD 2>/dev/null) || return 1
+  printf '\n\033[1m  ◆ VERSION COMPARISON\033[0m\n'
+  printf '  ──────────────────────────────────────────────\n'
+  printf '  Installed     \033[36m%s\033[0m\n' "$local_rev"
+  printf '  Available     \033[1;32m%s\033[0m\n' "$remote_rev"
+  printf '\n\033[1m  ◆ CHANGELOG\033[0m\n'
+  printf '  ──────────────────────────────────────────────\n'
+  if [[ "$local_rev" == "$remote_rev" ]]; then
+    printf '    No new commits.\n\n'
+    printf '    Latest commit\n'
+    git -C "$repo" log -1 --format='    %h  %s' HEAD 2>/dev/null
+    printf '\n  ┌──────────────────────────────────────────┐\n'
+    printf '  │  \033[1;32m✓ ALL UP TO DATE\033[0m                        │\n'
+    printf '  │  No new updates available.               │\n'
+    printf '  └──────────────────────────────────────────┘\n'
+    return 0
+  fi
+  if ! git -C "$repo" merge-base --is-ancestor HEAD FETCH_HEAD; then
+    printf '  \033[31m✗ Branches diverged or local revision is ahead.\033[0m\n'
+    printf '  No automatic update.\n'; return 1
+  fi
+  count=$(git -C "$repo" rev-list --count HEAD..FETCH_HEAD 2>/dev/null) || return 1
+  printf '  \033[1;32m%s new commit(s)\033[0m · newest first\n\n' "$count"
+  git -C "$repo" log -8 --format='  %h  %s' HEAD..FETCH_HEAD 2>/dev/null
+  if (( count > 8 )); then printf '  ... and %s more\n' "$((count - 8))"; fi
+  printf '\n  ┌──────────────────────────────────────────┐\n'
+  printf '  │  \033[1;33m● UPDATE AVAILABLE\033[0m                      │\n'
+  printf '  └──────────────────────────────────────────┘\n'
+  printf '  Install this update now? [y/N] '
+  IFS= read -r answer || return 1
+  if [[ "$answer" != y && "$answer" != Y ]]; then
+    printf '  Update skipped.\n'; return 0
+  fi
+  status=$(git -C "$repo" status --porcelain 2>/dev/null) || { printf '  Could not check local changes.\n'; return 1; }
+  if [[ -n "$status" ]]; then
+    printf '  \033[31m✗ Local changes detected. Update cancelled.\033[0m\n'; return 1
+  fi
+  printf '\n\033[1m  ◆ INSTALLATION PROGRESS\033[0m\n'
+  printf '  ──────────────────────────────────────────────\n'
+  printf '    \033[1;32m✓\033[0m  [1/3] Repository checked\n'
+  printf '    \033[1;32m✓\033[0m  [2/3] %s commit(s) ready\n' "$count"
+  printf '    \033[36m●\033[0m  [3/3] Installing %s → %s ...\n' "$local_rev" "$remote_rev"
+  local merge_output
+  if merge_output=$(git -C "$repo" merge --quiet --ff-only FETCH_HEAD 2>&1); then
+    printf '\r\033[2K    \033[1;32m✓\033[0m  [3/3] Installation complete\n'
+    printf '\n  ┌──────────────────────────────────────────┐\n'
+    printf '  │  \033[1;32m✓ UPDATE INSTALLED\033[0m                      │\n'
+    printf '  │  New revision: \033[1;32m%-7s\033[0m                   │\n' "$remote_rev"
+    printf '  │  Reloading m³ with the new version...    │\n'
+    printf '  └──────────────────────────────────────────┘\n'
+    M3_RESTART_REQUIRED=1
+  else
+    printf '    \033[31m✗\033[0m  [3/3] Installation failed\n'
+    printf '    %s\n' "$merge_output"
+    return 1
+  fi
+}
+
+main_menu() {
+  local cursor=0 key next secret_count=0
+  local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Container Manager' 'Update m³' 'Settings' 'Info' 'Exit')
+  local -a icons=('[S]' '[H]' '[T]' '[P]' '[C]' '[U]' '[G]' '[i]' '[X]')
+  local -a nerd_icons=('󰍹' '󰓅' '󰒓' '󰉋' '󰡨' '󰚰' '󰒓' '󰋼' '󰈆')
+  if [[ ! -t 0 || ! -t 1 ]]; then
+    printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
+    return 1
+  fi
+  while true; do
+    printf '\033[H\033[2J'
+    print_header 'DevOps Workstation Setup'
+    if [[ "$(m3_icon_mode)" == nerd ]]; then icons=("${nerd_icons[@]}"); else icons=('[S]' '[H]' '[T]' '[P]' '[C]' '[U]' '[G]' '[i]' '[X]'); fi
+    for i in "${!items[@]}"; do
+      if (( i == cursor )); then
+        printf '\033[32m >\033[0m  \033[36m%s\033[0m  %s\n' "${icons[i]}" "${items[i]}"
+      else
+        printf '    \033[2m%s\033[0m  %s\n' "${icons[i]}" "${items[i]}"
+      fi
+    done
+    printf '\n↑/↓ Navigate  Enter Select\n'
+    IFS= read -rsn1 key || return 0
+    if [[ "$key" == m ]]; then
+      secret_count=$((secret_count + 1))
+      if (( secret_count == 3 )); then
+        matrix_easter_egg
+        secret_count=0
+      fi
+      continue
+    fi
+    secret_count=0
+    case "$key" in
+      $'\033')
+        if IFS= read -rsn1 -t 0.15 next; then
+          if [[ "$next" == '[' ]]; then
+            IFS= read -rsn1 -t 0.15 next || continue
+            case "$next" in
+              A) cursor=$(( (cursor + ${#items[@]} - 1) % ${#items[@]} )) ;;
+              B) cursor=$(( (cursor + 1) % ${#items[@]} )) ;;
+            esac
+          fi
+        else
+          return 0
+        fi
+        ;;
+      '')
+        printf '\033[H\033[2J'
+        case "$cursor" in
+          0) bash "$SCRIPT_DIR/check-system.sh" || printf 'Diagnostics failed.\n'; pause_menu || return 0 ;;
+          1) bash "$SCRIPT_DIR/health-check.sh" || printf 'Health check failed.\n'; pause_menu || return 0 ;;
+          2) select_tools ;;
+          3) bash "$SCRIPT_DIR/project-manager.sh" || printf 'Project scan failed.\n' ;;
+          4) bash "$SCRIPT_DIR/container-manager.sh" || { printf "Container Manager failed.\n"; pause_menu; } ;;
+          5) if update_m3; then for seconds in 3 2 1; do printf '\r  Returning to main menu in %s... ' "$seconds"; sleep 1; done; printf '\n'; if [[ "${M3_RESTART_REQUIRED:-0}" == 1 ]]; then exec bash "$SCRIPT_DIR/m3.sh"; fi; else pause_menu || return 0; fi ;;
+          6) show_settings_page ;;
+          7) show_settings; pause_menu || return 0 ;;
+          8) return 0 ;;
+        esac
+        ;;
+    esac
+  done
+}
+
+main_menu
+printf 'Goodbye from m³.\n'
+\033') return 0 ;;
+    esac
+  done
 }
 
 
