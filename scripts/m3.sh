@@ -195,7 +195,7 @@ m3_icon_mode() {
 }
 
 show_settings_page() {
-  local key mode config="$HOME/.config/m3/icon-mode"
+  local key mode config="$HOME/.config/m3/icon-mode" confirmation
   while true; do
     printf '\033[H\033[2J'
     print_header 'Settings'
@@ -205,22 +205,41 @@ show_settings_page() {
       printf '  JetBrainsMono Nerd Font: installed (fontconfig).\n'
     else
       printf '  JetBrainsMono Nerd Font: missing.\n'
-      printf '  Install it via Tool Manager > Install selected.\n'
     fi
-    printf '  Select the Nerd Font in your terminal preferences.\n\n'
-    printf '  [n] Nerd Font icons   [c] Classic markers   [Enter] Back\n'
+    printf '  Select JetBrainsMono Nerd Font Mono in terminal preferences.\n\n'
+    printf '  [n] Nerd Font icons (install font if missing)\n'
+    printf '  [c] Classic markers   [Enter] Back\n'
     IFS= read -rsn1 key || return 0
     case "$key" in
-      n|N|c|C)
+      n|N)
+        if ! m3_tool_present nerdfont; then
+          printf '\n  JetBrainsMono Nerd Font is missing.\n'
+          printf '  Install to ~/.local/share/fonts/JetBrainsMonoNerd from Nerd Fonts GitHub.\n'
+          printf '  Type INSTALL to proceed (Enter cancels): '
+          IFS= read -r confirmation || return 1
+          if [[ "$confirmation" != INSTALL ]]; then
+            printf '  Installation cancelled.\n'
+            pause_menu
+            continue
+          fi
+          if ! m3_install_tool nerdfont "$confirmation" || ! m3_tool_present nerdfont; then
+            printf '  Font installation failed or font not detected.\n'
+            pause_menu
+            continue
+          fi
+        fi
         mkdir -p "$HOME/.config/m3" || return 1
-        if [[ "$key" == n || "$key" == N ]]; then printf 'nerd\n' > "$config"
-        else printf 'classic\n' > "$config"; fi ;;
+        printf 'nerd\n' > "$config" || return 1
+        printf '  Nerd Font icons enabled.\n'
+        ;;
+      c|C)
+        mkdir -p "$HOME/.config/m3" || return 1
+        printf 'classic\n' > "$config" || return 1 ;;
       '') return 0 ;;
       $'\033') return 0 ;;
     esac
   done
 }
-
 
 matrix_easter_egg() {
   local frame row col char
