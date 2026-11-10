@@ -456,7 +456,11 @@ main_menu() {
 
 
 preview_selected() {
-  local i tool count=0 formula environment failures=0
+  local i tool count=0 formula environment failures=0 cols width status hint
+  m3_ui_terminal_size
+  cols="$M3_COLS"
+  width=$((cols-6))
+  ((width>12)) || width=12
   local -a ready=() manual=()
   printf '\n\033[1m  ◆ SELECTED TOOLS — REVIEW\033[0m\n'
   printf '  Only tools explicitly selected with Space are considered.\n'
@@ -471,13 +475,17 @@ preview_selected() {
       printf '  %-14s Already installed; skipped\n' "$(m3_tool_label "$tool")"
     elif formula="$(m3_install_command "$tool")"; then
       if m3_install_environment >/dev/null; then
-        printf '  %-14s \033[1;32mREADY\033[0m     %s\n' "$(m3_tool_label "$tool")" "$formula"
+        printf '  %-14s \033[1;32mREADY\033[0m\n' "$(m3_tool_label "$tool")"
+        printf '      %s\n' "${formula:0:width}"
         ready+=("$tool")
       else
-        printf '  %-14s \033[1;33mBLOCKED\033[0m   %s\n' "$(m3_tool_label "$tool")" "$environment"
+        printf '  %-14s \033[1;33mBLOCKED\033[0m\n' "$(m3_tool_label "$tool")"
+        printf '      %s\n' "${environment:0:width}"
       fi
     else
-      printf '  %-14s \033[1;33mMANUAL\033[0m    %s\n' "$(m3_tool_label "$tool")" "$(m3_tool_hint "$tool")"
+      hint="$(m3_tool_hint "$tool")"
+      printf '  %-14s \033[1;33mMANUAL\033[0m\n' "$(m3_tool_label "$tool")"
+      printf '      %s\n' "${hint:0:width}"
       manual+=("$tool")
     fi
   done
