@@ -14,7 +14,9 @@ print_header() {
   printf '\033[32m  ╭──────────────────────────────────────────────╮\033[0m\n'
   printf '\033[32m  │\033[0m                                              \033[32m│\033[0m\n'
   printf '\033[32m  │\033[0m   \033[1;32mm³\033[0m   \033[1mDEVOPS WORKSTATION\033[0m                    \033[32m│\033[0m\n'
-  printf '\033[32m  │\033[0m   \033[2m%-41.41s\033[0m  \033[32m│\033[0m\n' "$section"
+  # Bash printf field widths can count UTF-8 bytes; pad by character count instead.
+  local label="${section:0:41}" pad=$((41 - ${#section:0:41}))
+  printf '\033[32m  │\033[0m   \033[2m%s\033[0m%*s  \033[32m│\033[0m\n' "$label" "$pad" ''
   printf '\033[32m  │\033[0m                                              \033[32m│\033[0m\n'
   printf '\033[32m  ╰──────────────────────────────────────────────╯\033[0m\n\n'
 }
