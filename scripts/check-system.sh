@@ -30,7 +30,8 @@ printf '  %-13s %-14s %s\n' 'TOOL' 'STATUS' 'VERSION'
 printf '  %s\n' '────────────────────────────────────────────────────────────'
 # Version checks use local CLI flags only; kubectl does not contact a cluster.
 get_version() {
-  local tool="$1" output='' bin="$tool"
+  local tool="$1" output='' bin
+  bin="$tool"
   local -a args=()
   case "$tool" in
     git|podman|distrobox|docker|curl|make|codium) args=(--version) ;;
@@ -66,7 +67,9 @@ get_version() {
 
 missing=0
 available=0
-for tool in "${m3_catalog[@]}"; do
+total=0
+while IFS= read -r tool; do
+  total=$((total+1))
   if m3_tool_present "$tool"; then
     version="$(get_version "$tool")" || version="version unavailable"
     printf '  %-13s %b%-14s%b %s\n' "$(m3_tool_label "$tool")" "$GREEN" '✓ installed' "$RESET" "$version"
@@ -75,7 +78,7 @@ for tool in "${m3_catalog[@]}"; do
     printf '  %-13s %-14s %s\n' "$(m3_tool_label "$tool")" '○ missing' '—'
     missing=$((missing + 1))
   fi
-done
+done < <(m3_tool_catalog)
 printf '\n  %s\n' '────────────────────────────────────────────────────────────'
-printf '  %b%d of %d%b tools installed  ·  %d missing\n' "$GREEN" "$available" "${#m3_catalog[@]}" "$RESET" "$missing"
+printf '  %b%d of %d%b tools installed  ·  %d missing\n' "$GREEN" "$available" "$total" "$RESET" "$missing"
 printf '  %bRead-only check · No changes made%b\n' "$DIM" "$RESET"
