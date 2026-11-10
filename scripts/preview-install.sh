@@ -32,10 +32,10 @@ printf '  %s\n' '─────────────────────
 for tool in "${tools[@]}"; do
   if command -v "$tool" >/dev/null 2>&1; then
     installed=$((installed+1))
-    printf '  %-16s %s%-12s%s %s\n' "$tool" "$green"'✓ Installed'"$reset" 'None'
+    printf '  %-16s %s%-12s%s  %s\n' "$tool" "$green" '✓ Installed' "$reset" 'None'
   else
     missing+=("$tool")
-    printf '  %-16s %s%-12s%s %s\n' "$tool" "$yellow"'○ Missing'"$reset" 'Review'
+    printf '  %-16s %s%-12s%s  %s\n' "$tool" "$yellow" '○ Missing' "$reset" 'Review'
   fi
 done
 printf '\n  %sSUMMARY%s\n' "$green" "$reset"
