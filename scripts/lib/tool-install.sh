@@ -130,6 +130,7 @@ m3_install_tool() {
               printf '  Go is required for kind installation. Select go first.\n'
               return 2
             fi
+            mkdir -p "$HOME/.local/bin" || return 1
             GOBIN="$HOME/.local/bin" go install sigs.k8s.io/kind@latest || return 1 ;;
         esac
         m3_tool_present "$tool" || {
