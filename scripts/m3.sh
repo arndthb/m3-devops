@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# m³ interactive menu — read-only; confirmation is simulated, no installs.
+# m³ interactive menu — diagnostics read-only; select Homebrew installs require confirmation.
 set -u
 
 # Keep the terminal cursor out of the interactive menu.
@@ -432,8 +432,10 @@ preview_selected() {
 
   printf '\n\033[1m  ◆ HOMEBREW INSTALLATION\033[0m\n'
   for tool in "${ready[@]}"; do
-    if ! m3_install_tool "$tool"; then
+    if ! m3_install_tool "$tool" "$answer"; then
       failures=$((failures + 1))
+      printf '  Stopping: remaining tools will not be attempted.\n'
+      break
     fi
   done
   printf '\n  Installation run finished · %d failed/blocked.\n' "$failures"
