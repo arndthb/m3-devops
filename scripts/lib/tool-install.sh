@@ -34,9 +34,14 @@ m3_install_command() {
 }
 
 # The only function permitted to invoke a package manager.
-# The caller must obtain an explicit, case-sensitive INSTALL confirmation first.
+# Require confirmation at the operation boundary as well as at the menu.
+# Do not rely on callers to have checked an answer previously.
 m3_install_tool() {
-  local tool="$1" formula environment
+  local tool="${1:-}" confirmation="${2:-}" formula environment
+  if [[ "$confirmation" != INSTALL ]]; then
+    printf '  No installation performed: exact INSTALL confirmation required.\n'
+    return 2
+  fi
   formula="$(m3_tool_formula "$tool")" || {
     printf '  %s: no approved installer; manual review needed.\n' "$tool"
     return 2
