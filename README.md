@@ -35,6 +35,7 @@ Run `m3` to open the terminal interface. The current menu includes:
 
 - **System diagnostics:** inspect the distribution and availability of development tools.
 - **Workstation health check:** inspect CPU, memory, disk, network, Podman, Kubernetes, and Git/GitHub CLI, with a summary status.
+- **Docker & Compose (Tool Manager):** read-only report of Docker CLI, Docker daemon, Docker Compose plugin/standalone, and Podman. It provides Bluefin DX setup guidance and never installs Docker, starts services, or launches a container.
 - **DevOps Tool Manager:** inspect installed tools, select missing tools with **Space**, then press **Enter** to review exactly which Homebrew commands are approved. Nothing is installed unless you type the case-sensitive word **INSTALL**. On a Bluefin host with Homebrew, m³ initially supports installing **Git**, **Go**, **kubectl** (`kubernetes-cli`), **Terraform** (`hashicorp/tap/terraform`) and **kind** (`kind`); **Podman** and **Distrobox** remain manual-review only. The menu also **detects VSCodium, Hermes, Docker, Compose, kind, make and curl**, but does **not** automatically install those additional tools except **kind**, which now uses Homebrew after confirmation. The separate **Automatic installation preview** is strictly read-only. Installation is refused as root, from Distrobox/a detected container, or without Homebrew. No sudo, OS-image changes, or unattended installation are performed.
 - **Container Manager:** browse Podman containers, images, volumes, networks, and disk usage without making changes. The menu uses the same highlighted selection and adaptive spacing as the main menu. Automatically generated hexadecimal volume IDs are shortened and labeled; use `podman volume inspect <volume-name>` for full metadata.
 - **DevOps Project Manager:** discover local Git and Compose projects, browse with ↑/↓, and open details with Enter.
@@ -55,6 +56,14 @@ The **DevOps Tool Manager** lists 13 development components, with paging on smal
 **Bluefin ships with Podman-centric workflows**; m³ does not assume Docker Desktop is required on Linux or replace Podman with Docker. For the original macOS/Windows setup, Docker Desktop with Compose should have at least **6 GiB RAM** allocated. On Bluefin, configure the kind provider separately and verify it with an actual cluster test.
 
 Installation remains restricted to the reviewed Homebrew allowlist (Git, Go, kubectl, Terraform) and requires the exact confirmation `INSTALL`. VSCodium, Hermes, Docker, Compose, kind, make and curl are *detection-only* until suitable Bluefin-safe installation methods are reviewed. No privileged operating-system changes occur.
+
+### Docker & Compose (Bluefin)
+
+Open **DevOps Tool Manager → Docker & Compose** for a read-only compatibility check. The presence of `docker` does not guarantee that Docker Engine is running; m³ checks `docker info` separately from `docker compose version`. A working Podman engine does not mean that Docker Engine is installed.
+
+According to [Bluefin Developer Mode](https://docs.projectbluefin.io/bluefin-dx/), **bluefin-dx** includes Docker Engine and a Dev Containers-oriented toolchain; Docker Desktop is not needed on Linux. If you are still using regular Bluefin, follow the project's documented **`ujust devmode` and reboot** steps, then **`ujust dx-group`** as appropriate and reboot. **Do not run `ujust devmode` blindly**: it toggles DX mode and may turn it off if already enabled. Check your existing image, login groups, Docker context and user services first.
+
+Docker on Bluefin is **not** installed via m³'s Homebrew allowlist: a standalone `brew install docker` would not provide a running Docker daemon. m³ also avoids generic Fedora `dnf` recipes, host package layering, `sudo`, and Docker Desktop installers. All configuration steps remain manual and explicit. For `kind`, an already working rootless Podman engine remains a supported option.
 
 ### Workstation readiness (Bluefin)
 
