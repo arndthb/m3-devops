@@ -331,7 +331,7 @@ main_menu() {
   local cursor=0 old_cursor key next secret_count=0 row_step=1 term_rows=24 term_cols=80
   local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Container Manager' 'Update m³' 'Settings' 'Info' 'Exit')
   local -a icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
-  local -a nerd_icons=('[ 󰍹 ]' '[ 󰓅 ]' '[ 󰒓 ]' '[ 󰉋 ]' '[ 󰡨 ]' '[ 󰚰 ]' '[ 󰒓 ]' '[ 󰋼 ]' '[ 󰈆 ]')
+  local -a nerd_icons=('[ \uf013 ]' '[ \uf121 ]' '[ \uf489 ]' '[ \uf1b2 ]' '[ \uf1b2 ]' '[ \uf021 ]' '[ \uf013 ]' '[ \uf05a ]' '[ \uf08b ]')
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
     return 1
