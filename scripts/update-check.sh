@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Read-only update status: only Homebrew-managed tools can be checked reliably.
+# Read-only update inventory for every tool in the shared m³ catalog.
 set -u
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/tool-detect.sh"
 printf '\033[H\033[2J'
 printf '\033[32m  ╭──────────────────────────────────────────────╮\033[0m\n'
 printf '\033[32m  │\033[0m                                              \033[32m│\033[0m\n'
@@ -21,18 +23,25 @@ if command -v brew >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; then
   fi
 fi
 version_of() {
-  local output=''
-  case "$1" in
-    git) output=$(git --version 2>/dev/null) ;;
-    podman) output=$(podman --version 2>/dev/null) ;;
-    distrobox) output=$(distrobox --version 2>/dev/null) ;;
-    kubectl) output=$(kubectl version --client 2>/dev/null) ;;
+  local tool="$1" output=''
+  case "$tool" in
+    git|podman|distrobox|kind|terraform|docker|make|curl|helm|k9s) output=$("$tool" --version 2>/dev/null | head -n 1) ;;
+    kubectl) output=$(kubectl version --client 2>/dev/null | head -n 1) ;;
     go) output=$(go version 2>/dev/null) ;;
-    terraform) output=$(terraform version 2>/dev/null) ;;
+    compose)
+      if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then output=$(docker compose version 2>/dev/null)
+      elif command -v docker-compose >/dev/null 2>&1; then output=$(docker-compose --version 2>/dev/null)
+      elif command -v podman-compose >/dev/null 2>&1; then output=$(podman-compose --version 2>/dev/null); fi ;;
+    codium)
+      if command -v codium >/dev/null 2>&1; then output=$(codium --version 2>/dev/null | head -n 1)
+      elif command -v flatpak >/dev/null 2>&1; then output=$(flatpak info --show-version com.vscodium.codium 2>/dev/null); fi ;;
+    hermes)
+      if command -v hermes >/dev/null 2>&1; then output=$(hermes --version 2>/dev/null | head -n 1)
+      elif command -v hermes-agent >/dev/null 2>&1; then output=$(hermes-agent --version 2>/dev/null | head -n 1); fi ;;
   esac
   if [[ "$output" =~ ([0-9]+[.][0-9]+([.][0-9]+)?) ]]; then
     printf '%s' "${BASH_REMATCH[1]}"
-  else printf '%s' 'unknown'; fi
+  else printf '-'; fi
 }
 # Read-only OS image update check; bootc preferred on Bluefin.
 os_update_state='Not checked'
@@ -69,75 +78,50 @@ if command -v timeout >/dev/null 2>&1; then
 fi
 printf '\n  %-12s %-12s %-13s %s\n' 'TOOL' 'VERSION' 'SOURCE' 'UPDATE STATUS'
 printf '  %s\n' '────────────────────────────────────────────────────────'
-for tool in git podman distrobox kubectl go terraform; do
+mapfile -t inventory < <(m3_tool_catalog)
+for tool in "${inventory[@]}"; do
   version='-'
-  if command -v "$tool" >/dev/null 2>&1; then
-    version=$(version_of "$tool")
+  if ! m3_tool_present "$tool"; then
+    printf '  %-12s %-12s %-17s %s\n' "$(m3_tool_label "$tool")" '-' '-' 'Not installed'
+    continue
   fi
-  if ! command -v "$tool" >/dev/null 2>&1; then
-    printf '  %-12s %-12s %-13s \033[2m%s\033[0m\n' "$tool" "$version" '-' 'Not installed'
-  elif [[ "$brew_list" == *$'\n'"$tool"$'\n'* || "$brew_list" == "$tool" || "$brew_list" == "$tool"$'\n'* || "$brew_list" == *$'\n'"$tool" ]]; then
-    if ((brew_ok)); then
-      if [[ "$brew_outdated" == *$'\n'"$tool"$'\n'* || "$brew_outdated" == "$tool" || "$brew_outdated" == "$tool"$'\n'* || "$brew_outdated" == *$'\n'"$tool" ]]; then
-        printf '  %-12s %-12s %-13s \033[33m%s\033[0m\n' "$tool" "$version" 'Homebrew' 'Update available'
-      else
-        printf '  %-12s %-12s %-13s \033[32m%s\033[0m\n' "$tool" "$version" 'Homebrew' 'No update reported'
-      fi
-    else
-      printf '  %-12s %-12s %-13s %s\n' "$tool" "$version" 'Homebrew' 'Unable to check'
-    fi
-  else
-    source='Unmanaged'
-    update='No package source found'
+  version=$(version_of "$tool")
+  source='Manual / other'
+  update='Check upstream'
+  if [[ "$tool" == codium ]] && command -v flatpak >/dev/null 2>&1 && flatpak info com.vscodium.codium >/dev/null 2>&1; then
+    source='Flatpak'; update='flatpak remote-ls --updates'
+  elif [[ "$tool" == compose ]] && command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    source='Docker plugin'; update='Check package owner'
+  elif command -v "$tool" >/dev/null 2>&1; then
     executable=$(command -v "$tool")
     resolved=$(readlink -f "$executable" 2>/dev/null) || resolved="$executable"
+    package=''
     if command -v rpm >/dev/null 2>&1; then
       package=$(rpm -qf --qf '%{NAME}' "$resolved" 2>/dev/null) || package=''
-      if [[ -z "$package" && "$resolved" != "$executable" ]]; then
-        package=$(rpm -qf --qf '%{NAME}' "$executable" 2>/dev/null) || package=''
+    fi
+    if [[ -n "$package" ]]; then
+      if command -v rpm-ostree >/dev/null 2>&1 || command -v bootc >/dev/null 2>&1; then
+        source='RPM / image'; update='OS image channel'
+      else
+        source='RPM / DNF'; update='Check with dnf check-update'
       fi
-      if [[ -n "$package" ]]; then
-        source='RPM / Bluefin'
-        update='OS update channel'
-        # A staged deployment is evidence of an OS update, not proof this tool changed.
-        if [[ "$os_backend" != none ]]; then
-          update='OS channel: see below'
-        fi
-      fi
+    elif [[ "$executable" == *'/.linuxbrew/'* || "$resolved" == *'/.linuxbrew/'* ]]; then
+      source='Homebrew'; update='Check brew outdated'
+    elif [[ "$executable" == /usr/local/* || "$executable" == "$HOME"/.local/* ]]; then
+      source='Manual / local'; update='Check upstream'
     fi
-    if [[ "$source" == Unmanaged ]]; then
-      case "$executable:$resolved" in
-        *'/home/linuxbrew/.linuxbrew/'*|*'/.linuxbrew/'*)
-          source='Homebrew'; update='Check brew formula';;
-        *'/run/host/'*|*'/usr/bin/'*|*'/usr/sbin/'*)
-          source='System path'; update='See Bluefin status';;
-      esac
-    fi
-    if [[ "$source" == Unmanaged ]]; then
-      case "$executable:$resolved" in
-        *'/usr/local/bin/'*|*'/usr/local/sbin/'*|*'/.local/bin/'*)
-          source='Manual/local'; update='Check upstream';;
-        "$HOME"/.local/share/mise/*|"$HOME"/.local/share/asdf/*)
-          source='Version mgr'; update='Check manager';;
-        /var/lib/flatpak/*|"$HOME"/.local/share/flatpak/*)
-          source='Flatpak'; update='Check flatpak';;
-        /usr/local/*)
-          source='Manual/local'; update='Check upstream';;
-      esac
-    fi
-    printf '  %-12s %-12s %-13s %s\n' "$tool" "$version" "$source" "$update"
   fi
+  printf '  %-12s %-12s %-17s %s\n' "$(m3_tool_label "$tool")" "$version" "$source" "$update"
 done
-printf '\n  System path: installed in an OS directory; package ownership unknown.\n'
-printf '  Bluefin status describes the OS image, not individual tool updates.\n'
-printf '\n  BLUEFIN OS UPDATE CHANNEL (%s): %s\n' "$os_backend" "$os_update_state"
-if [[ "$os_update_state" == 'Check completed; inspect output' || "$os_update_state" == 'Check failed or timed out' ]]; then
-  printf '  %s\n' "$os_update_detail" | head -n 8
+
+printf '\n  Inventory: %d tools from the m³ Tool Manager.\n' "${#inventory[@]}"
+if [[ -r /etc/os-release ]]; then
+  . /etc/os-release
+  printf '  Host: %s\n' "${PRETTY_NAME:-Linux}"
 fi
-printf '  This is an OS-wide check, not a per-tool update verdict.\n'
-if [[ "$os_update_state" == 'Requires sudo authorization' ]]; then
-  printf '  Check bootc options manually: bootc upgrade --help\n'
+if [[ "$os_backend" != none ]]; then
+  printf '  OS image status (%s): %s\n' "$os_backend" "$os_update_state"
+else
+  printf '  RPM tools on regular Fedora: use sudo dnf check-update to check available updates.\n'
 fi
-printf '\n  Homebrew checks use local package metadata.\n'
-printf '  Bluefin OS tools update together via the OS update channel.\n  Source detection does not prove an update is available.\n'
-printf '  bootc status is read-only; no upgrade or deployment requested.\n'
+printf '  Read-only inventory; no packages were changed.\n'
