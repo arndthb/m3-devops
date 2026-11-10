@@ -18,6 +18,48 @@ printf '\033[32m  │\033[0m   \033[1;32mm³\033[0m   \033[1mDEVOPS WORKSTATION\
 printf '\033[32m  │\033[0m   %-41s  \033[32m│\033[0m\n' 'Workstation Health Check'
 printf '\033[32m  │\033[0m                                              \033[32m│\033[0m\n'
 printf '\033[32m  ╰──────────────────────────────────────────────╯\033[0m\n\n'
+# Sample aggregate CPU counters twice; no extra packages required.
+cpu_sample() {
+  awk '/^cpu / {
+    idle=$5+$6; total=0
+    for (i=2; i<=NF; i++) total+=$i
+    printf "%.0f %.0f\n", total, idle
+    exit
+  }' /proc/stat
+}
+if [[ -r /proc/stat ]]; then
+  read -r total1 idle1 < <(cpu_sample)
+  sleep 0.35
+  read -r total2 idle2 < <(cpu_sample)
+  delta=$((total2-total1))
+  idle_delta=$((idle2-idle1))
+  if ((delta>0)); then
+    cpu=$((100*(delta-idle_delta)/delta))
+    if ((cpu>=95)); then status FAIL 'CPU' "$cpu% busy (sample)"
+    elif ((cpu>=80)); then status WARN 'CPU' "$cpu% busy (sample)"
+    else status OK 'CPU' "$cpu% busy (sample)"; fi
+  else status INFO 'CPU' 'Usage unavailable'; fi
+else status INFO 'CPU' 'Linux /proc/stat unavailable'; fi
+
+# Local network status only: no external requests or DNS queries.
+route_iface=''
+if command -v ip >/dev/null 2>&1; then
+  route_iface=$(ip -4 route show default 2>/dev/null | awk 'NR==1 {for (i=1;i<=NF;i++) if ($i=="dev") {print $(i+1); exit}}')
+fi
+if [[ -n "$route_iface" ]]; then
+  if [[ -r "/sys/class/net/$route_iface/operstate" ]]; then
+    read -r link_state < "/sys/class/net/$route_iface/operstate"
+    case "$link_state" in
+      up|unknown) status OK 'Network' "Default route via $route_iface (link: $link_state)" ;;
+      *) status WARN 'Network' "Default route via $route_iface (link: $link_state)" ;;
+    esac
+  else status INFO 'Network' "Default route via $route_iface; link unknown"; fi
+elif command -v ip >/dev/null 2>&1; then
+  status INFO 'Network' 'No IPv4 default route configured'
+else
+  status INFO 'Network' 'ip command unavailable'
+fi
+
 if [[ -r /proc/meminfo ]]; then
   total=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
   avail=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
