@@ -29,6 +29,24 @@ If `~/.local/bin` is in your PATH, start the interactive menu from anywhere with
 
 If `m3` is not found, open a new terminal or add `$HOME/.local/bin` to your PATH.
 
+## Interactive workstation menu
+
+Run `m3` to open the terminal interface. The current menu includes:
+
+- **System diagnostics:** inspect the distribution and availability of development tools.
+- **Workstation health check:** inspect CPU, memory, disk, network, Podman, Kubernetes, and Git/GitHub CLI, with a summary status.
+- **DevOps Tool Manager:** inspect available development tools.
+- **DevOps Project Manager:** discover local Git and Compose projects, browse with ↑/↓, and open details with Enter.
+- **Settings and information:** view available configuration and project information.
+
+### DevOps Project Manager
+
+The project manager searches common directories (`~/Projects`, `~/projects`, `~/Developer`, `~/Code`, `~/Documents/DevOps`, and `~`) up to two directory levels deep. It recognizes Git repositories and projects with `compose.yaml`, `compose.yml`, `docker-compose.yml`, or `docker-compose.yaml`. Backup-like directory names are excluded.
+
+The interactive list shows each project's name, Git branch/status, and Compose file. An asterisk (`*`) indicates local Git changes, including untracked files; `?` indicates an unavailable status. The details view displays the full path, branch, origin, up to three recent commits, a short working-tree status, the Compose filename, and top-level entries.
+
+Use **↑/↓** to select a project, **Enter** to open details, **Enter** again to return to the project list, and **Esc** to return to the main menu. The project manager is **read-only**: it does not modify repositories, install tools, or start containers. Git information reflects the last scan, not continuous monitoring.
+
 ## Roadmap
 
 - **v0.1:** Read-only system and tool checks
