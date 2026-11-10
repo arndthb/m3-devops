@@ -121,7 +121,7 @@ for tool in git podman distrobox kubectl go terraform; do
           source='Version mgr'; update='Check manager';;
         /var/lib/flatpak/*|"$HOME"/.local/share/flatpak/*)
           source='Flatpak'; update='Check flatpak';;
-        /usr/local/*|"$HOME"/.local/bin/*)
+        /usr/local/*)
           source='Manual/local'; update='Check upstream';;
       esac
     fi
