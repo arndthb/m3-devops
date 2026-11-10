@@ -123,6 +123,51 @@ def test_tool_manager_readonly():
             term.close()
 
 
+def test_confirmed_tool_install_via_menu():
+    # A restricted PATH makes Go missing and ensures only our fake brew can run.
+    with tempfile.TemporaryDirectory() as d:
+        bindir = Path(d) / "bin"
+        bindir.mkdir()
+        (bindir / "dirname").symlink_to("/usr/bin/dirname")
+        log = Path(d) / "brew-actions.log"
+        fake_brew = bindir / "brew"
+        fake_brew.write_text(
+            "#!/bin/bash\n"
+            'printf "%s\\n" "$*" >> "$M3_MOCK_LOG"\n'
+            'printf "mock installation succeeded\\n"\n'
+        )
+        fake_brew.chmod(0o755)
+        env = dict(os.environ)
+        env["PATH"] = str(bindir)
+        env["HOME"] = d
+        env["M3_MOCK_LOG"] = str(log)
+        env.pop("DISTROBOX_ENTER_PATH", None)
+        env.pop("CONTAINER_ID", None)
+
+        term = Terminal(SCRIPT, env=env)
+        try:
+            term.expect(b"DevOps Workstation Setup")
+            term.send(b"\x1b[B" * 2 + b"\r")
+            term.expect(b"DevOps Tool Manager")
+            term.send(b"\x1b[B" * 4 + b" " + b"\r")
+            term.expect(b"SELECTED TOOLS", timeout=5)
+            term.expect(b"brew install --formula go", timeout=5)
+            assert not log.exists(), "Homebrew ran before user confirmed"
+            term.send(b"\r")
+            term.expect(b"Cancelled", timeout=5)
+            assert not log.exists(), "Homebrew ran on blank confirmation"
+            term.send(b"\r")
+            term.expect(b"DevOps Tool Manager", timeout=5)
+            term.send(b"\r")
+            term.expect(b"Type", timeout=5)
+            term.send(b"INSTALL\r")
+            term.expect(b"mock installation succeeded", timeout=5)
+            assert log.read_text() == "install --formula go\n"
+            print("PASS: menu dry-run cancel then explicit INSTALL invokes only mocked Homebrew")
+        finally:
+            term.close()
+
+
 def test_info_return():
     term = Terminal(SCRIPT)
     try:
@@ -298,6 +343,7 @@ if __name__ == "__main__":
     test_container_manager()
     test_settings_roundtrip()
     test_tool_manager_readonly()
+    test_confirmed_tool_install_via_menu()
     test_project_manager()
     test_info_return()
     test_no_update_return()

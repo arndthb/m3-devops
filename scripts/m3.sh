@@ -8,6 +8,8 @@ if [[ -t 1 ]]; then
   trap 'printf "\033[?25h"' EXIT HUP INT TERM
 fi
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/tool-install.sh
+source "$SCRIPT_DIR/lib/tool-install.sh"
 tools=(git podman distrobox kubectl go terraform)
 selected=(0 0 0 0 0 0)
 
@@ -76,7 +78,7 @@ select_tools() {
       printf '       Back to main menu\n'
     fi
     printf '\n[-] Installed / locked   [x] Selected   [ ] Available\n'
-    printf '↑/↓ Navigate  Space Toggle  Enter Select\n'
+    printf '↑/↓ Navigate  Space Toggle  Enter Review / Select\n'
     IFS= read -rsn1 key || return
     case "$key" in
       $'\033')
@@ -386,48 +388,57 @@ main_menu() {
 
 
 preview_selected() {
-  local i tool count=0 missing=0 answer
-  local -a pending=()
-  printf '\nm³ — Selected tools installation preview (DRY RUN)\n'
-  printf 'No software will be installed.\n'
+  local i tool count=0 answer formula environment failures=0
+  local -a ready=()
+  printf '\n\033[1m  ◆ SELECTED TOOLS — REVIEW\033[0m\n'
+  printf '  Only tools explicitly selected with Space are considered.\n'
+  printf '  No changes happen until you type INSTALL.\n\n'
+
+  environment="$(m3_install_environment)" || true
   for i in "${!tools[@]}"; do
     [[ "${selected[i]}" == 1 ]] || continue
-    count=$((count + 1))
     tool="${tools[i]}"
+    count=$((count + 1))
     if is_installed "$tool"; then
-      printf '[installed] %s — no action needed\n' "$tool"
-    else
-      missing=$((missing + 1))
-      pending+=("$tool")
-      printf '[missing]   %s\n' "$tool"
-      if ! command -v brew >/dev/null 2>&1; then
-        printf '            Homebrew not detected; installation method needs review.\n'
-      elif [[ "$tool" == terraform ]]; then
-        printf '            Suggested (NOT executed): brew tap hashicorp/tap\n'
-        printf '            Suggested (NOT executed): brew install hashicorp/tap/terraform\n'
-      elif [[ "$tool" == podman || "$tool" == distrobox ]]; then
-        printf '            System-integrated tool: check Bluefin image; no brew suggestion.\n'
+      printf '  %-14s Already installed; skipped\n' "$tool"
+    elif formula="$(m3_install_command "$tool")"; then
+      if m3_install_environment >/dev/null; then
+        printf '  %-14s \033[1;32mREADY\033[0m     %s\n' "$tool" "$formula"
+        ready+=("$tool")
       else
-        printf '            Suggested (NOT executed): brew install %s\n' "$tool"
+        printf '  %-14s \033[1;33mBLOCKED\033[0m   %s\n' "$tool" "$environment"
       fi
+    else
+      printf '  %-14s \033[1;33mMANUAL\033[0m    Bluefin / OS-managed or unreviewed formula\n' "$tool"
     fi
   done
+
   if (( count == 0 )); then
-    printf 'No tools selected.\n'
-  elif (( missing == 0 )); then
-    printf 'All selected tools are already installed.\n'
-  else
-    printf '\nConfirmation flow test: %d missing tool(s): %s\n' "$missing" "${pending[*]}"
-    printf 'Type INSTALL to confirm this plan, or press Enter to cancel: '
-    IFS= read -r answer || answer=''
-    if [[ "$answer" == INSTALL ]]; then
-      printf 'Confirmation accepted (simulation only).\n'
-      printf 'Installation execution is not enabled in this version.\n'
-    else
-      printf 'Cancelled.\n'
-    fi
+    printf '  Nothing selected. Use Space on a missing tool first.\n'
+    return 0
   fi
-  printf 'Preview complete. No changes made.\n'
+  printf '\n  %d selected · %d approved for Homebrew installation\n' "$count" "${#ready[@]}"
+  if (( ${#ready[@]} == 0 )); then
+    printf '  No supported installation actions. Nothing changed.\n'
+    return 0
+  fi
+  printf '\n  Type \033[1mINSTALL\033[0m to install ONLY the READY tools above\n'
+  printf '  using Homebrew (or press Enter to cancel): '
+  IFS= read -r answer || answer=''
+  if [[ "$answer" != INSTALL ]]; then
+    printf '\n  Cancelled. No software installed.\n'
+    return 0
+  fi
+
+  printf '\n\033[1m  ◆ HOMEBREW INSTALLATION\033[0m\n'
+  for tool in "${ready[@]}"; do
+    if ! m3_install_tool "$tool"; then
+      failures=$((failures + 1))
+    fi
+  done
+  printf '\n  Installation run finished · %d failed/blocked.\n' "$failures"
+  printf '  Recheck tool status after returning to the menu.\n'
+  (( failures == 0 ))
 }
 
 main_menu
