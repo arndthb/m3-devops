@@ -298,7 +298,7 @@ main_menu() {
           1) bash "$SCRIPT_DIR/health-check.sh" || printf 'Health check failed.\n'; pause_menu || return 0 ;;
           2) select_tools ;;
           3) bash "$SCRIPT_DIR/project-manager.sh" || printf 'Project scan failed.\n' ;;
-          4) if update_m3; then printf '  Returning to main menu in 2 seconds...\n'; sleep 2; else pause_menu || return 0; fi ;;
+          4) if update_m3; then for seconds in 3 2 1; do printf '\r  Returning to main menu in %s... ' "$seconds"; sleep 1; done; printf '\n'; else pause_menu || return 0; fi ;;
           5) show_settings_page; pause_menu || return 0 ;;
           6) show_settings; pause_menu || return 0 ;;
           7) return 0 ;;
