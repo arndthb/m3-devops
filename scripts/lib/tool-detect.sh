@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Shared read-only inventory for m³. Presence is not the same as a working service.
 m3_tool_catalog() {
-  printf '%s\n' git podman distrobox kubectl go terraform codium hermes docker compose kind make curl nerdfont
+  printf '%s\n' git podman distrobox kubectl go terraform codium hermes codex chatgpt docker compose kind make curl nerdfont
 }
 
 m3_tool_label() {
@@ -9,6 +9,8 @@ m3_tool_label() {
     codium) printf 'VSCodium' ;;
     compose) printf 'Compose' ;;
     hermes) printf 'Hermes' ;;
+    codex) printf 'Codex CLI' ;;
+    chatgpt) printf 'ChatGPT Desktop' ;;
     nerdfont) printf 'JetBrainsMono Nerd Font' ;;
     *) printf '%s' "$1" ;;
   esac
@@ -24,6 +26,10 @@ m3_tool_present() {
         flatpak info com.vscodium.codium >/dev/null 2>&1 && return 0
       fi
       return 1 ;;
+    chatgpt)
+      command -v chatgpt >/dev/null 2>&1 || rpm -q chatgpt >/dev/null 2>&1 ;;
+    codex)
+      command -v codex >/dev/null 2>&1 || [[ -x "$HOME/.local/bin/codex" ]] ;;
     hermes)
       command -v hermes >/dev/null 2>&1 ||
       command -v hermes-agent >/dev/null 2>&1 ||
@@ -64,6 +70,8 @@ m3_tool_hint() {
     nerdfont) printf 'Install JetBrainsMono Nerd Font for terminal icons' ;;
     codium) printf 'Review VSCodium Flatpak (com.vscodium.codium)' ;;
     hermes) printf 'Review Hermes agent installation and PATH' ;;
+    codex) printf 'Official OpenAI Codex CLI for Linux' ;;
+    chatgpt) printf 'Official ChatGPT RPM: Fedora 43/44 supported; download from OpenAI' ;;
     docker) printf 'Docker engine/CLI differs from Bluefin Podman' ;;
     compose) printf 'Install Docker Compose plugin or Podman Compose provider' ;;
     kind) printf 'Needs a working Docker/Podman container provider' ;;
