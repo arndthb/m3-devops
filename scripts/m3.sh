@@ -257,8 +257,8 @@ update_m3() {
   printf '  ──────────────────────────────────────────────\n'
   if [[ "$local_rev" == "$remote_rev" ]]; then
     printf '  No new commits.\n\n'
-    printf '  Latest commit  '
-    git -C "$repo" log -1 --format='%h  %s' HEAD 2>/dev/null
+    printf '  Latest commit\n'
+    git -C "$repo" log -1 --format='    %h  %s' HEAD 2>/dev/null
     printf '\n  ┌──────────────────────────────────────────┐\n'
     printf '  │  \033[1;32m✓ ALL UP TO DATE\033[0m                        │\n'
     printf '  │  No new updates available.               │\n'
