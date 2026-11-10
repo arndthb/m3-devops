@@ -310,6 +310,7 @@ update_m3() {
 main_menu() {
   local cursor=0 key next secret_count=0
   local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Container Manager' 'Update m³' 'Settings' 'Info' 'Exit')
+  local -a icons=('◈' '♥' '⚒' '▣' '▤' '↻' '⚙' 'ⓘ' '⏻')
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
     return 1
@@ -319,9 +320,9 @@ main_menu() {
     print_header 'DevOps Workstation Setup'
     for i in "${!items[@]}"; do
       if (( i == cursor )); then
-        printf '\033[32m >\033[0m  %s\n' "${items[i]}"
+        printf '\033[32m >\033[0m  %s  %s\n' "${icons[i]}" "${items[i]}"
       else
-        printf '    %s\n' "${items[i]}"
+        printf '    %s  %s\n' "${icons[i]}" "${items[i]}"
       fi
     done
     printf '\n↑/↓ Navigate  Enter Select\n'
