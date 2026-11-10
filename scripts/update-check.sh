@@ -41,31 +41,18 @@ os_backend='none'
 if command -v timeout >/dev/null 2>&1; then
   if command -v bootc >/dev/null 2>&1; then
     os_backend='bootc'
-    printf '\n  Checking Bluefin bootc update channel (up to 45 seconds)...\n'
-    # A staged image is authoritative even when the version label is unchanged.
+    printf '\\n  Reading Bluefin bootc deployment status (no upgrade check)...\\n'
     bootc_status=''
-    if bootc_status=$(timeout 12s sudo -n bootc status 2>/dev/null); then
-      if [[ "$bootc_status" == *'Staged image:'* ]]; then
-        os_update_state='Update staged - reboot pending'
-        os_update_detail='A different image is staged for the next boot.'
-      fi
-    fi
-    if [[ "$os_update_state" == 'Update staged - reboot pending' ]]; then
-      :
-    elif os_update_detail=$(timeout 45s sudo -n bootc upgrade --check 2>&1); then
-      case "${os_update_detail,,}" in
-        *'update already staged'*|*'already staged'*) os_update_state='Update staged - reboot pending';;
-        *'no update available'*|*'no updates available'*|*'no upgrade available'*|*'already up to date'*) os_update_state='No OS update reported';;
-        *'update available'*|*'upgrade available'*) os_update_state='OS update available';;
-        *) os_update_state='Check completed; inspect output';;
-      esac
-    else
-      if [[ "$os_update_detail" == *'password is required'* || "$os_update_detail" == *'a password is required'* || "$os_update_detail" == *'sudo: '* || "$os_update_detail" == *'must be executed as the root user'* ]]; then
-        os_update_state='Requires sudo authorization'
+    if bootc_status=$(timeout 12s bootc status 2>/dev/null) || bootc_status=$(timeout 12s sudo -n bootc status 2>/dev/null); then
+      if [[ "$bootc_status" == *'Staged image:'* ]] || [[ "$bootc_status" == *'staged:'* ]]; then
+        os_update_state='Deployment staged; inspect bootc status'
       else
-        os_update_state='Check failed or timed out'
+        os_update_state='Deployment readable; availability not checked'
       fi
+    else
+      os_update_state='Deployment status unavailable'
     fi
+    os_update_detail='bootc upgrade is intentionally not invoked; check-only support is unverified.'
   elif command -v rpm-ostree >/dev/null 2>&1; then
     os_backend='rpm-ostree'
     printf '\n  Checking rpm-ostree update channel (up to 45 seconds)...\n'
@@ -149,8 +136,8 @@ if [[ "$os_update_state" == 'Check completed; inspect output' || "$os_update_sta
 fi
 printf '  This is an OS-wide check, not a per-tool update verdict.\n'
 if [[ "$os_update_state" == 'Requires sudo authorization' ]]; then
-  printf '  Run manually: sudo bootc upgrade --check\n'
+  printf '  Check bootc options manually: bootc upgrade --help\n'
 fi
 printf '\n  Homebrew checks use local package metadata.\n'
 printf '  Bluefin OS tools update together via the OS update channel.\n  Source detection does not prove an update is available.\n'
-printf '  OS check may use network; no upgrade or deployment requested.\n'
+printf '  bootc status is read-only; no upgrade or deployment requested.\n'
