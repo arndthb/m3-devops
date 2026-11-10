@@ -13,7 +13,7 @@ print_header() {
   local section="${1:-DevOps Workstation Setup}"
   printf '\033[32m  ╭──────────────────────────────────────────────╮\033[0m\n'
   printf '\033[32m  │\033[0m                                              \033[32m│\033[0m\n'
-  printf '\033[32m  │\033[0m   \033[1;32mm³\033[0m   \033[1mDEVOPS WORKSTATION\033[0m                   \033[32m│\033[0m\n'
+  printf '\033[32m  │\033[0m   \033[1;32mm³\033[0m   \033[1mDEVOPS WORKSTATION\033[0m                    \033[32m│\033[0m\n'
   printf '\033[32m  │\033[0m   \033[2m%-41.41s\033[0m  \033[32m│\033[0m\n' "$section"
   printf '\033[32m  │\033[0m                                              \033[32m│\033[0m\n'
   printf '\033[32m  ╰──────────────────────────────────────────────╯\033[0m\n\n'
