@@ -168,6 +168,48 @@ def test_confirmed_tool_install_via_menu():
             term.close()
 
 
+def test_tool_batch_stops_after_first_failure():
+    with tempfile.TemporaryDirectory() as d:
+        bindir = Path(d) / "bin"
+        bindir.mkdir()
+        (bindir / "dirname").symlink_to("/usr/bin/dirname")
+        log = Path(d) / "brew-actions.log"
+        fake_brew = bindir / "brew"
+        fake_brew.write_text(
+            "#!/bin/bash\n"
+            'printf "%s\\n" "$*" >> "$M3_MOCK_LOG"\n'
+            "exit 23\n"
+        )
+        fake_brew.chmod(0o755)
+        env = dict(os.environ)
+        env["PATH"] = str(bindir)
+        env["HOME"] = d
+        env["M3_MOCK_LOG"] = str(log)
+        env.pop("DISTROBOX_ENTER_PATH", None)
+        env.pop("CONTAINER_ID", None)
+
+        term = Terminal(SCRIPT, env=env)
+        try:
+            term.expect(b"DevOps Workstation Setup")
+            term.send(b"\x1b[B" * 2 + b"\r")
+            term.expect(b"DevOps Tool Manager")
+            term.send(b"\x1b[B" * 3 + b" " + b"\x1b[B" + b" " + b"\r")
+            term.expect(b"SELECTED TOOLS", timeout=5)
+            term.expect(b"2 approved for Homebrew installation", timeout=5)
+            assert not log.exists()
+            term.send(b"INSTALL\r")
+            term.expect(b"Stopping: remaining tools will not be attempted", timeout=5)
+            assert log.read_text() == "install --formula kubernetes-cli\n", (
+                "Second tool was attempted despite first failure"
+            )
+            at = len(term.output)
+            term.send(b"\r")
+            term.expect(b"DevOps Tool Manager", timeout=5, after=at)
+            print("PASS: failure stops batch and returns to Tool Manager")
+        finally:
+            term.close()
+
+
 def test_info_return():
     term = Terminal(SCRIPT)
     try:
@@ -344,6 +386,7 @@ if __name__ == "__main__":
     test_settings_roundtrip()
     test_tool_manager_readonly()
     test_confirmed_tool_install_via_menu()
+    test_tool_batch_stops_after_first_failure()
     test_project_manager()
     test_info_return()
     test_no_update_return()
