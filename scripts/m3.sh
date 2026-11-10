@@ -135,7 +135,8 @@ select_tools() {
         else
           return
         fi
-        pause_menu || return ;;
+        pause_menu || return
+        redraw=1 ;;
       q|Q) return ;;
     esac
     if ((cursor/page_size*page_size != old_page_start)); then
