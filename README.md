@@ -1,113 +1,141 @@
-# m³ – Linux Workstation Automation
+# m³ – DevOps Workstation for Fedora
 
-**A lightweight, modular toolkit for Linux DevOps workstations.**
+**BUILD · RUN · SHIP**
 
-m³ aims to inspect and eventually automate DevOps workstation setup. The initial focus is [Bluefin](https://projectbluefin.io/), with other Linux distributions planned.
+m³ is a terminal-based DevOps workstation setup and management tool, focused on **Fedora Workstation**. It provides system diagnostics, a tool installer, workstation readiness checks, project discovery, container inspection and self-updates.
 
-## v0.1 – Read-only diagnostics
+## System requirements
 
-The diagnostics check the Linux distribution and detect Git, Podman, Distrobox, kubectl, Go, Terraform, VSCodium, Hermes, Docker CLI, Compose, kind, make, and curl. It reports missing tools without installing software or changing configuration.
+- **Operating system:** Fedora Workstation (standard, mutable installation with **DNF**). Fedora 45 is the current development/test target. Other Fedora releases may work, but are not automatically guaranteed.
+- **Architecture:** x86_64 is the primary target. Some installers also support aarch64; availability varies by tool.
+- **Terminal:** A terminal with ANSI escape sequences and UTF-8 support. **JetBrainsMono Nerd Font Mono** is recommended for the icon mode.
+- **Shell:** Bash.
+- **Base utilities:** Git, curl, standard GNU/Linux utilities and a working internet connection for downloads and updates.
+- **Permissions:** Run m³ as your **normal user**, not as root. Selected Fedora package installations may request sudo authentication.
+- **Storage:** Enough free disk space for the selected tools, container images and development projects; requirements depend on your workload.
+- **Containers:** Docker Engine or Podman as appropriate. Installing a CLI does not guarantee its daemon or engine is running.
 
-Run on an existing Linux workstation:
+**Not supported as a provisioning target:** immutable Fedora images (rpm-ostree/bootc), running m³ inside Distrobox/another container, and installations without a supported host package manager. This repository is **not** a Bluefin-specific setup guide.
+
+## Installation
+
+Open a terminal on Fedora Workstation:
 
 ```bash
-bash scripts/check-system.sh
-```
-
-The script uses standard shell utilities and does not require elevated privileges. A missing command does not necessarily mean the tool is unavailable inside a development container.
-
-## Easy launcher (Linux)
-
-From your existing repository checkout, run once:
-
-```bash
-git pull origin main
+sudo dnf install -y git curl
+git clone https://github.com/arndthb/m3-devops.git
+cd m3-devops
 bash scripts/install-launcher.sh
 ```
 
-If `~/.local/bin` is in your PATH, start the interactive menu from anywhere with `m3`, or update the repository with `m3 update`. The update uses `git pull --ff-only origin main` and refuses to proceed if the checkout contains local changes. Neither command installs DevOps tools. The launcher does not overwrite an existing `~/.local/bin/m3`.
+Start the app:
 
-If `m3` is not found, open a new terminal or add `$HOME/.local/bin` to your PATH.
+```bash
+m3
+```
 
-## Interactive workstation menu
+If `m3` is not found, open a new terminal and make sure `~/.local/bin` is in your `PATH`. Alternatively, run `bash scripts/m3.sh` from the repository directory.
 
-Run `m3` to open the terminal interface. The current menu includes:
+If you already cloned the repository:
 
-- **System diagnostics:** inspect the distribution and availability of development tools.
-- **Workstation health check:** inspect CPU, memory, disk, network, Podman, Kubernetes, and Git/GitHub CLI, with a summary status.
-- **Docker & Compose (Tool Manager):** read-only report of Docker CLI, Docker daemon, Docker Compose plugin/standalone, and Podman. It provides Bluefin DX setup guidance and never installs Docker, starts services, or launches a container.
-- **DevOps Tool Manager:** inspect installed tools, select missing tools with **Space**, then press **Enter** to review exactly which Homebrew commands are approved. Nothing is installed unless you type the case-sensitive word **INSTALL**. On a Bluefin host with Homebrew, m³ initially supports installing **Git**, **Go**, **kubectl** (`kubernetes-cli`), **Terraform** (`hashicorp/tap/terraform`) and **kind** (`kind`); **Podman** and **Distrobox** remain manual-review only. The menu also **detects VSCodium, Hermes, Docker, Compose, kind, make and curl**, but does **not** automatically install those additional tools except **kind**, which now uses Homebrew after confirmation. The separate **Automatic installation preview** is strictly read-only. Installation is refused as root, from Distrobox/a detected container, or without Homebrew. No sudo, OS-image changes, or unattended installation are performed.
-- **Container Manager:** browse Podman containers, images, volumes, networks, and disk usage without making changes. The menu uses the same highlighted selection and adaptive spacing as the main menu. Automatically generated hexadecimal volume IDs are shortened and labeled; use `podman volume inspect <volume-name>` for full metadata.
-- **DevOps Project Manager:** discover local Git and Compose projects, browse with ↑/↓, and open details with Enter.
-- **Update m³ / Check Updates:** fetch the latest `origin/main` revision, display the installed and available Git commit IDs (the project does not yet publish separate semantic version numbers), and offer to install an available update with explicit confirmation. Installation is fast-forward only and is refused if local changes exist or branches have diverged. When already current, or after a successful/skipped update, a visible 3–2–1 countdown returns to the main menu. The running menu reloads itself after a successful update to use the new code.
-- **Settings and information:** view available configuration and project information.
+```bash
+cd ~/m3-devops
+git pull --ff-only origin main
+bash scripts/install-launcher.sh
+```
 
-### Bluefin workstation tool detection
+## Main menu
 
-The **DevOps Tool Manager** lists 13 development components, with paging on smaller terminals. Use **↑/↓** to browse, **Space** to select missing components, and **Enter** to review. It reports tools available in the *current environment*, not in every Distrobox.
+| Menu | Purpose |
+| --- | --- |
+| System diagnostics | Inspect Fedora, hardware and development tool availability |
+| Workstation health check | Inspect CPU, memory, disk, network and selected development services |
+| DevOps Tool Manager | Detect, select and install supported development tools |
+| DevOps Project Manager | Browse local Git and Compose projects |
+| Container Manager | Inspect Podman containers, images, networks, volumes and disk usage |
+| Update m³ | Update the local checkout from `origin/main` |
+| Settings | Choose classic markers or Nerd Font icons; offer font installation when missing |
+| Info | Project information |
 
-- **VSCodium**: detected via the `codium` command or the Flatpak ID `com.vscodium.codium`.
-- **Hermes**: detected via `hermes`, `hermes-agent`, or an executable `~/.local/bin/hermes`. Detection alone does not validate login or provider configuration.
-- **Docker**: the `docker` command is checked independently. Its presence does not prove the Docker daemon is running.
-- **Compose**: checks `docker compose version`, then standalone `docker-compose` or `podman-compose`. Compose does not imply a working Docker engine.
-- **kind**: checks the `kind` command; creating a cluster still requires a working container provider.
-- **make**, **curl**, **git**, **Go** and **kubectl**: checks command availability on the current PATH.
+## DevOps Tool Manager
 
-**Bluefin ships with Podman-centric workflows**; m³ does not assume Docker Desktop is required on Linux or replace Podman with Docker. For the original macOS/Windows setup, Docker Desktop with Compose should have at least **6 GiB RAM** allocated. On Bluefin, configure the kind provider separately and verify it with an actual cluster test.
+Use **↑/↓** to navigate and **Space** to select missing tools. Choose **Install selected** to start installing supported selections. You **do not need to type `INSTALL`** in the Tool Manager. Package-manager commands use noninteractive approval flags where supported, but sudo authentication and third-party installers may still prompt.
 
-Installation remains restricted to the reviewed Homebrew allowlist (Git, Go, kubectl, Terraform) and requires the exact confirmation `INSTALL`. VSCodium, Hermes, Docker, Compose, kind, make and curl are *detection-only* until suitable Bluefin-safe installation methods are reviewed. No privileged operating-system changes occur.
+- **READY:** m³ has an installation recipe for the detected host.
+- **MANUAL:** The tool is recognized, but an automated installation recipe is not available for this host.
+- **BLOCKED:** The current environment does not meet installation requirements.
+- **Installed:** The tool was detected; this does not necessarily mean it is configured, authenticated or ready to run.
 
-### Docker & Compose (Bluefin)
+The catalog includes Git, Podman, Distrobox, kubectl, Go, Terraform, VSCodium, Hermes Agent, Codex CLI, ChatGPT Desktop, Docker, Compose, kind, make, curl and JetBrainsMono Nerd Font.
 
-Open **DevOps Tool Manager → Docker & Compose** for a read-only compatibility check. The presence of `docker` does not guarantee that Docker Engine is running; m³ checks `docker info` separately from `docker compose version`. A working Podman engine does not mean that Docker Engine is installed.
+### Fedora installation methods
 
-According to [Bluefin Developer Mode](https://docs.projectbluefin.io/bluefin-dx/), **bluefin-dx** includes Docker Engine and a Dev Containers-oriented toolchain; Docker Desktop is not needed on Linux. If you are still using regular Bluefin, follow the project's documented **`ujust devmode` and reboot** steps, then **`ujust dx-group`** as appropriate and reboot. **Do not run `ujust devmode` blindly**: it toggles DX mode and may turn it off if already enabled. Check your existing image, login groups, Docker context and user services first.
+| Tool | Installation / notes |
+| --- | --- |
+| Git, Go, kubectl, Distrobox | Fedora DNF packages where supported |
+| Docker Engine and Compose | Docker's Fedora repository and packages; engine health checked separately |
+| Terraform | Official HashiCorp release ZIP, SHA-256 checked, installed to `~/.local/bin` |
+| VSCodium | Flathub Flatpak (`com.vscodium.codium`) |
+| kind | `go install` into `~/.local/bin`; Go and a container provider required |
+| Hermes Agent | Official Nous Research installer; requires subsequent provider setup |
+| Codex CLI | Official OpenAI installer; sign in separately with ChatGPT |
+| ChatGPT Desktop | Detected and listed; installation remains manual until an RPM compatible with the Fedora release is confirmed |
+| JetBrainsMono Nerd Font | Installed in the user's font directory; select the font in terminal preferences |
+| Podman, make, curl | Detected; installation availability depends on the current approved recipe |
 
-Docker on Bluefin is **not** installed via m³'s Homebrew allowlist: a standalone `brew install docker` would not provide a running Docker daemon. m³ also avoids generic Fedora `dnf` recipes, host package layering, `sudo`, and Docker Desktop installers. All configuration steps remain manual and explicit. For `kind`, an already working rootless Podman engine remains a supported option.
+A failed installation stops the remaining selected operations. Installation does not automatically configure cloud credentials, logins or Kubernetes clusters.
 
-### Workstation readiness (Bluefin)
+### Docker and Kubernetes
 
-From **DevOps Tool Manager**, choose **Workstation readiness** to run local, read-only preflight checks for VSCodium, Hermes, Podman, Docker, Compose, kind, kubectl and cgroup v2. The check distinguishes an installed Docker CLI from a reachable Docker daemon; it likewise verifies Podman's engine availability without creating any containers. Hermes detection does not confirm authentication or a configured model.
+Docker CLI, Docker daemon, Docker Compose and Podman are checked separately. A successful `docker --version` does **not** prove the Docker daemon is reachable.
 
-**kind installation:** Select the missing **kind** entry with Space, press Enter to review `brew install --formula kind` and type exactly `INSTALL` to approve it. This is supported by Homebrew on Linux. Installing kind **does not automatically configure or launch a Kubernetes cluster**.
-
-For an available Podman engine, the readiness screen *suggests* the explicit command below (it never executes it):
+For a rootless Podman setup, kind can be launched manually after the provider is configured:
 
 ```bash
 KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster --name m3-test --wait 90s
 ```
 
-Before attempting this manually, ensure that rootless Podman is set up with cgroup v2 and appropriate user service delegation. See the [kind rootless instructions](https://kind.sigs.k8s.io/docs/user/rootless/) and [Bluefin Developer Mode](https://docs.projectbluefin.io/bluefin-dx/). Docker Desktop is not required for this Bluefin/Podman workflow; Linux Docker Engine and Compose are separate optional alternatives. m³ does not install or activate Docker, edit systemd services, download Hermes, or change the operating-system image.
+See the [kind rootless documentation](https://kind.sigs.k8s.io/docs/user/rootless/). Do not assume Docker and Podman are interchangeable without provider-specific configuration.
 
-### DevOps Project Manager
+### Nerd Font icons
 
-The project manager searches common directories (`~/Projects`, `~/projects`, `~/Developer`, `~/Code`, `~/Documents/DevOps`, and `~`) up to two directory levels deep. It recognizes Git repositories and projects with `compose.yaml`, `compose.yml`, `docker-compose.yml`, or `docker-compose.yaml`. Backup-like directory names are excluded.
+In **Settings**, choose **Nerd Font icons**. m³ checks whether JetBrainsMono Nerd Font is installed and offers installation if needed. **Installing a font does not automatically select it in the terminal profile**: set **JetBrainsMono Nerd Font Mono** in your terminal's font preferences. Classic markers remain available.
 
-The project browser shows the name, Git branch/status, and Compose file in a **paged list**, limited to the terminal's visible height. An asterisk (`*`) indicates local Git changes (including untracked files); `?` indicates unavailable status. A selected project's **scrollable details** include its full path, branch, origin, up to three recent commits, a short working-tree status, the Compose file and top-level entries.
+## Project Manager
 
-Use **↑/↓** to select a project, **Enter** to open details, **Enter** again to return to the list, and **Esc** to return to the main menu. Press **/** to search project names and paths, **F** to cycle through *All / Git / Compose / Changed*, **C** to clear the search, or **R** to rescan the filesystem. Empty results remain interactive so you can adjust the filter. The project manager is **read-only**: it does not modify repositories, install tools, or start containers. Git status is a snapshot from the last scan, not continuous monitoring.
+m³ discovers local Git and Compose projects in common development directories. Browse with ↑/↓ and Enter; use **/** to search, **F** to filter, **C** to clear, and **R** to rescan. Project browsing is read-only.
 
-Menu rendering helpers for Project Manager and Container Manager are shared in `scripts/lib/ui.sh`; this keeps their headers, colors, and selection rows consistent. The other menus will be migrated separately.
+## Updating m³
 
-### Confirmed tool installation (experimental)
+Choose **Update m³** from the main menu, or run:
 
-Use **m3 → DevOps Tool Manager → Space** to select one or more missing tools and **Enter** to review the proposed actions. Only tools shown as **READY** will be installed after you explicitly type `INSTALL` and press Enter. Other selections are shown as **BLOCKED** or **MANUAL** and will not be installed. `brew install --formula ...` is the only allowed package operation in this phase; Homebrew can download packages and modify its user-managed prefix. Always inspect the displayed command first, and do not run m³ as root or inside Distrobox. A failed installation is reported without any fallback to `sudo`, `rpm-ostree`, or `bootc`. An installation failure immediately stops the remaining selected tools, rather than silently continuing. The exact `INSTALL` confirmation is also checked inside the installer function itself.
+```bash
+m3 update
+```
 
-The tool install feature is an **early v0.2 preview**, not a general workstation provisioning engine. It intentionally does not update installed packages or manage Podman or Distrobox automatically. Terraform installation first runs `brew tap hashicorp/tap`, followed by `brew install --formula hashicorp/tap/terraform` after the same explicit `INSTALL` confirmation. If adding the tap fails, the formula is not installed. Automated tests use a fake `brew` binary and never install real software.
+Updates use `git pull --ff-only origin main` and will not overwrite local modifications or force a divergent branch. The running menu reloads after a successful update.
+
+## Diagnostics without installation
+
+```bash
+bash scripts/check-system.sh
+```
+
+This command reports tool availability without installing software.
+
+## Security and limitations
+
+m³ is an **experimental** workstation tool, not an unattended fleet provisioning solution. Some installers download and execute upstream scripts; use only sources you trust and review changes before running them. A successful installation is not proof of a healthy service. Do not put API keys, tokens or passwords in the repository.
 
 ## Roadmap
 
-- **v0.1:** Read-only system and tool checks
-- **v0.2 (in progress):** Curated, confirmed Homebrew installation for Git, Go, kubectl and Terraform; expand to safe configuration and additional tools after review
-- **Future:** Bootable live environment with online and offline installation
-- **Future:** Optional developer onboarding and documentation integrations
-
-## Principles
-
-Safe by default; explicit user consent before system changes; modular and reproducible configuration; no credentials in source code or logs.
+- Fedora-first installer validation and automated shell checks
+- More reliable terminal rendering across window sizes
+- Expanded tool installation and readiness checks
+- Optional developer onboarding and documentation integrations
 
 ## License
 
 MIT. See [LICENSE](LICENSE).
 
-This is an independent community project and is not affiliated with any Linux distribution vendor or hosting company.
+Independent community project; not affiliated with Fedora, Red Hat, OpenAI, HashiCorp or other vendors.
