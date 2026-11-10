@@ -84,8 +84,13 @@ select_tools() {
         printf '[ ] %-14s (missing)\n' "${tools[i]}"
       fi
     done
+    if (( cursor == ${#tools[@]} )); then
+      printf '\033[32m >\033[0m     Back to main menu\n'
+    else
+      printf '       Back to main menu\n'
+    fi
     printf '\n[-] Installed / locked   [x] Selected   [ ] Available\n'
-    printf '↑/↓ Navigate  Space Toggle  Enter Preview  Esc Back\n'
+    printf '↑/↓ Navigate  Space Toggle  Enter Select\n'
     IFS= read -rsn1 key || return
     case "$key" in
       $'\033')
@@ -94,8 +99,8 @@ select_tools() {
           if [[ "$choice" == '[' ]]; then
             IFS= read -rsn1 -t 0.15 choice || continue
             case "$choice" in
-              A) cursor=$(( (cursor + ${#tools[@]} - 1) % ${#tools[@]} )) ;;
-              B) cursor=$(( (cursor + 1) % ${#tools[@]} )) ;;
+              A) cursor=$(( (cursor + ${#tools[@]} - 1) % (${#tools[@]} + 1) )) ;;
+              B) cursor=$(( (cursor + 1) % (${#tools[@]} + 1) )) ;;
             esac
           fi
         else
@@ -104,11 +109,14 @@ select_tools() {
         fi
         ;;
       ' ')
-        if ! is_installed "${tools[cursor]}"; then
+        if (( cursor < ${#tools[@]} )) && ! is_installed "${tools[cursor]}"; then
           selected[cursor]=$((1 - selected[cursor]))
         fi
         ;;
-      '') printf '\033[H\033[2J'; preview_selected; pause_menu || return ;;
+      '')
+        if (( cursor == ${#tools[@]} )); then return; fi
+        printf '\033[H\033[2J'; preview_selected; pause_menu || return
+        ;;
     esac
   done
 }
@@ -138,7 +146,7 @@ main_menu() {
         printf '    %s\n' "${items[i]}"
       fi
     done
-    printf '\n↑/↓ Navigate  Enter Select  Esc Exit\n'
+    printf '\n↑/↓ Navigate  Enter Select\n'
     IFS= read -rsn1 key || return 0
     case "$key" in
       $'\033')
