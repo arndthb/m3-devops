@@ -286,30 +286,57 @@ update_m3() {
 }
 
 main_menu() {
-  local cursor=0 old_cursor key next secret_count=0
+  local cursor=0 old_cursor key next secret_count=0 row_step=1 term_rows=24 term_cols=80
   local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Container Manager' 'Update m³' 'Settings' 'Info' 'Exit')
-  local -a icons=('[S]' '[H]' '[T]' '[P]' '[C]' '[U]' '[G]' '[i]' '[X]')
-  local -a nerd_icons=('󰍹' '󰓅' '󰒓' '󰉋' '󰡨' '󰚰' '󰒓' '󰋼' '󰈆')
+  local -a icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
+  local -a nerd_icons=('[ 󰍹 ]' '[ 󰓅 ]' '[ 󰒓 ]' '[ 󰉋 ]' '[ 󰡨 ]' '[ 󰚰 ]' '[ 󰒓 ]' '[ 󰋼 ]' '[ 󰈆 ]')
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
     return 1
   fi
+  # The terminal owns font size; use block lettering, bold text and framed icons.
+  print_main_banner() {
+    if (( term_cols >= 56 )); then
+      printf '\033[1;32m  ███╗   ███╗³\033[0m   \033[1;37mDEVOPS\033[0m\n'
+      printf '\033[1;32m  ████╗ ████║ \033[0m   \033[1;37mWORKSTATION\033[0m\n'
+      printf '\033[1;32m  ██╔████╔██║ \033[0m   \033[2mBUILD · RUN · SHIP\033[0m\n'
+      printf '\033[1;32m  ██║╚██╔╝██║ \033[0m   \033[2mLinux / Bluefin\033[0m\n'
+      printf '\033[1;32m  ╚═╝ ╚═╝ ╚═╝ \033[0m   \033[36mDevOps Workstation Setup\033[0m\n'
+      printf '\033[32m  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n\n'
+    else
+      printf '\033[1;32m  m³ DEVOPS WORKSTATION\033[0m\n'
+      printf '  DevOps Workstation Setup\n\n\n\n'
+      printf '  ━━━━━━━━━━━━━━━━━━━━━━━\n\n'
+    fi
+  }
   render_menu_row() {
     local index="$1"
-    local row=$((8 + index))
+    local row=$((8 + index * row_step))
     printf '\033[%d;1H\033[2K' "$row"
     if (( index == cursor )); then
-      printf '\033[32m >\033[0m  \033[36m%s\033[0m  %s' "${icons[index]}" "${items[index]}"
+      printf '  \033[1;30;42m ▸ \033[0m \033[1;32m%s\033[0m  \033[1;37m%s\033[0m' "${icons[index]}" "${items[index]}"
     else
-      printf '    \033[2m%s\033[0m  %s' "${icons[index]}" "${items[index]}"
+      printf '      \033[2;36m%s\033[0m  %s' "${icons[index]}" "${items[index]}"
     fi
   }
   render_main_menu() {
+    read -r term_rows term_cols < <(stty size 2>/dev/null || printf '24 80\n')
+    (( term_rows > 0 )) || term_rows=24
+    (( term_cols > 0 )) || term_cols=80
+    row_step=1
+    if (( term_rows >= 29 && term_cols >= 65 )); then row_step=2; fi
     printf '\033[?25l\033[H\033[2J'
-    print_header 'DevOps Workstation Setup'
-    if [[ "$(m3_icon_mode)" == nerd ]]; then icons=("${nerd_icons[@]}"); else icons=('[S]' '[H]' '[T]' '[P]' '[C]' '[U]' '[G]' '[i]' '[X]'); fi
-    for i in "${!items[@]}"; do render_menu_row "$i"; printf '\n'; done
-    printf '\n↑/↓ Navigate  Enter Select\n'
+    print_main_banner
+    if [[ "$(m3_icon_mode)" == nerd ]]; then
+      icons=("${nerd_icons[@]}")
+    else
+      icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
+    fi
+    for i in "${!items[@]}"; do
+      render_menu_row "$i"
+      if (( row_step == 2 )); then printf '\n\n'; else printf '\n'; fi
+    done
+    printf '\n\033[2m  ↑ / ↓ Navigate    •    Enter Select    •    Esc Exit\033[0m\n'
   }
   render_main_menu
   while true; do
