@@ -4,8 +4,8 @@ set -u
 
 # Keep the terminal cursor out of the interactive menu.
 if [[ -t 1 ]]; then
-  printf '\\033[?25l'
-  trap 'printf "\\033[?25h"' EXIT HUP INT TERM
+  printf '\033[?25l'
+  trap 'printf "\033[?25h"' EXIT HUP INT TERM
 fi
 header() {
   printf '\033[H\033[2J'
