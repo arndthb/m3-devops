@@ -131,6 +131,17 @@ select_tools() {
   done
 }
 
+print_link() {
+  local url="$1"
+  # OSC 8 hyperlinks are clickable in supporting terminal emulators.
+  # The full URL remains visible and can be copied in other terminals.
+  if [[ -t 1 && "${TERM:-dumb}" != dumb ]]; then
+    printf '\033]8;;%s\033\\\033[4;34m%s\033[0m\033]8;;\033\\' "$url" "$url"
+  else
+    printf '%s' "$url"
+  fi
+}
+
 show_settings() {
   local revision='unavailable'
   if command -v git >/dev/null 2>&1; then
@@ -144,11 +155,15 @@ show_settings() {
   printf '  %-15s %s\n' 'Mode' 'Read-only / installation simulation'
   printf '  %-15s %s\n\n' 'License' 'MIT'
   printf '\033[1m  PROJECT\033[0m\n'
-  printf '  %-15s %s\n' 'Repository' 'github.com/arndthb/m3-devops'
+  printf '  %-15s ' 'Repository'
+  print_link 'https://github.com/arndthb/m3-devops'
+  printf '\n'
   printf '  %-15s %s\n\n' 'Updates' 'm3 update'
   printf '\033[1m  AUTHOR\033[0m\n'
   printf '  Arndt H. Bohrenkämper\n'
-  printf '  GitHub: github.com/arndthb\n'
+  printf '  GitHub: '
+  print_link 'https://github.com/arndthb'
+  printf '\n'
   printf '  Independent open-source project · 2026\n\n'
   printf '\033[2m  No configuration changes are available yet.\033[0m\n'
 }
