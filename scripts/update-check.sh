@@ -9,8 +9,7 @@ printf '\033[32m  │\033[0m   %-41.41s  \033[32m│\033[0m\n' 'DevOps Tool Mana
 printf '\033[32m  │\033[0m                                              \033[32m│\033[0m\n'
 printf '\033[32m  ╰──────────────────────────────────────────────╯\033[0m\n\n'
 printf '  Read-only · No updates will be installed.\n\n'
-printf '  %-12s %-12s %-13s %s\n' 'TOOL' 'VERSION' 'SOURCE' 'UPDATE STATUS'
-printf '  %s\n' '────────────────────────────────────────────────────────'
+
 brew_list=''
 brew_outdated=''
 brew_ok=0
@@ -55,6 +54,7 @@ if command -v timeout >/dev/null 2>&1; then
       :
     elif os_update_detail=$(timeout 45s sudo -n bootc upgrade --check 2>&1); then
       case "${os_update_detail,,}" in
+        *'update already staged'*|*'already staged'*) os_update_state='Update staged - reboot pending';;
         *'no update available'*|*'no updates available'*|*'no upgrade available'*|*'already up to date'*) os_update_state='No OS update reported';;
         *'update available'*|*'upgrade available'*) os_update_state='OS update available';;
         *) os_update_state='Check completed; inspect output';;
@@ -80,7 +80,8 @@ if command -v timeout >/dev/null 2>&1; then
     fi
   fi
 fi
-printf '\n'
+printf '\n  %-12s %-12s %-13s %s\n' 'TOOL' 'VERSION' 'SOURCE' 'UPDATE STATUS'
+printf '  %s\n' '────────────────────────────────────────────────────────'
 for tool in git podman distrobox kubectl go terraform; do
   version='-'
   if command -v "$tool" >/dev/null 2>&1; then
