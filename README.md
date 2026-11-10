@@ -16,6 +16,19 @@ bash scripts/check-system.sh
 
 The script uses standard shell utilities and does not require elevated privileges. A missing command does not necessarily mean the tool is unavailable inside a development container.
 
+## Easy launcher (Linux)
+
+From your existing repository checkout, run once:
+
+```bash
+git pull origin main
+bash scripts/install-launcher.sh
+```
+
+If `~/.local/bin` is in your PATH, start the interactive menu from anywhere with `m3`, or update the repository with `m3 update`. The update uses `git pull --ff-only origin main` and refuses to proceed if the checkout contains local changes. Neither command installs DevOps tools. The launcher does not overwrite an existing `~/.local/bin/m3`.
+
+If `m3` is not found, open a new terminal or add `$HOME/.local/bin` to your PATH.
+
 ## Roadmap
 
 - **v0.1:** Read-only system and tool checks
