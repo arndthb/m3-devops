@@ -38,27 +38,42 @@ preview_selected() {
 }
 
 select_tools() {
-  local i choice
+  local i choice key cursor=0
+  if [[ ! -t 0 || ! -t 1 ]]; then
+    printf 'Interactive selection requires a terminal.\n'
+    return
+  fi
   while true; do
-    printf '\nm³ — Select DevOps tools\n'
-    printf 'Toggle a tool by entering its number.\n'
+    printf '\033[H\033[2J'
+    printf 'm³ — Select DevOps tools\n'
+    printf '↑/↓ Navigate  Space Toggle  Enter Preview  Esc Back\n\n'
     for i in "${!tools[@]}"; do
+      if (( i == cursor )); then printf ' > '; else printf '   '; fi
       if [[ "${selected[i]}" == 1 ]]; then
-        printf '  [%d] [x] %s\n' "$((i + 1))" "${tools[i]}"
+        printf '[x] %s\n' "${tools[i]}"
       else
-        printf '  [%d] [ ] %s\n' "$((i + 1))" "${tools[i]}"
+        printf '[ ] %s\n' "${tools[i]}"
       fi
     done
-    printf '  [p] Preview selected tools\n  [0] Back\nChoice: '
-    IFS= read -r choice || return
-    case "$choice" in
-      [1-6])
-        i=$((choice - 1))
-        selected[i]=$((1 - selected[i]))
+    IFS= read -rsn1 key || return
+    case "$key" in
+      $'\033')
+        # Arrow keys send ESC [ A/B; a lone ESC returns to the menu.
+        if IFS= read -rsn1 -t 0.15 choice; then
+          if [[ "$choice" == '[' ]]; then
+            IFS= read -rsn1 -t 0.15 choice || continue
+            case "$choice" in
+              A) cursor=$(( (cursor + ${#tools[@]} - 1) % ${#tools[@]} )) ;;
+              B) cursor=$(( (cursor + 1) % ${#tools[@]} )) ;;
+            esac
+          fi
+        else
+          printf '\033[H\033[2J'
+          return
+        fi
         ;;
-      p|P) preview_selected; pause_menu || return ;;
-      0) return ;;
-      *) printf 'Invalid choice.\n' ;;
+      ' ') selected[cursor]=$((1 - selected[cursor])) ;;
+      '') printf '\033[H\033[2J'; preview_selected; pause_menu || return ;;
     esac
   done
 }
