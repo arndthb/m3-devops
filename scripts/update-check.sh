@@ -127,7 +127,9 @@ for tool in git podman distrobox kubectl go terraform; do
       esac
     fi
     if [[ "$source" == Unmanaged ]]; then
-      case "$resolved" in
+      case "$executable:$resolved" in
+        *'/usr/local/bin/'*|*'/usr/local/sbin/'*|*'/.local/bin/'*)
+          source='Manual/local'; update='Check upstream';;
         "$HOME"/.local/share/mise/*|"$HOME"/.local/share/asdf/*)
           source='Version mgr'; update='Check manager';;
         /var/lib/flatpak/*|"$HOME"/.local/share/flatpak/*)
