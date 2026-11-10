@@ -257,7 +257,7 @@ update_m3() {
   printf '  ──────────────────────────────────────────────\n'
   if [[ "$local_rev" == "$remote_rev" ]]; then
     printf '    No new commits.\n\n'
-    printf '  Latest commit\n'
+    printf '    Latest commit\n'
     git -C "$repo" log -1 --format='    %h  %s' HEAD 2>/dev/null
     printf '\n  ┌──────────────────────────────────────────┐\n'
     printf '  │  \033[1;32m✓ ALL UP TO DATE\033[0m                        │\n'
@@ -292,10 +292,10 @@ update_m3() {
   printf '    \033[36m●\033[0m  [3/3] Installing %s → %s ...\n' "$local_rev" "$remote_rev"
   local merge_output
   if merge_output=$(git -C "$repo" merge --quiet --ff-only FETCH_HEAD 2>&1); then
-    printf '    \033[1;32m✓\033[0m  [3/3] Installation complete\n'
+    printf '\r\033[2K    \033[1;32m✓\033[0m  [3/3] Installation complete\n'
     printf '\n  ┌──────────────────────────────────────────┐\n'
     printf '  │  \033[1;32m✓ UPDATE INSTALLED\033[0m                      │\n'
-    printf '  │  New revision: \033[1;32m%-7s\033[0m                 │\n' "$remote_rev"
+    printf '  │  New revision: \033[1;32m%-7s\033[0m                   │\n' "$remote_rev"
     printf '  │  Restart m³ to load the new version.     │\n'
     printf '  └──────────────────────────────────────────┘\n'
   else
