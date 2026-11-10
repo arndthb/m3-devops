@@ -84,10 +84,11 @@ select_tools() {
         printf '[ ] %-14s (missing)\n' "${tools[i]}"
       fi
     done
+    printf '\n'
     if (( cursor == ${#tools[@]} )); then
-      printf '\033[32m >\033[0m     Back\n'
+      printf '\033[32m >\033[0m     Back to main menu\n'
     else
-      printf '       Back\n'
+      printf '       Back to main menu\n'
     fi
     printf '\n[-] Installed / locked   [x] Selected   [ ] Available\n'
     printf '↑/↓ Navigate  Space Toggle  Enter Select\n'
