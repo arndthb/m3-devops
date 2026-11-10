@@ -40,18 +40,34 @@ def run_checks():
         assert r.returncode != 0 and not log.exists(), r
         print("PASS: formula allowlist and reject unsupported tools")
 
-        r = bash('m3_install_tool terraform', env)
+        r = bash('m3_install_tool terraform INSTALL', env)
         assert r.returncode == 2 and not log.exists(), r
         print("PASS: unsupported install never calls Homebrew")
 
         blocked = dict(env, DISTROBOX_ENTER_PATH="/usr/bin/distrobox-enter")
-        r = bash('m3_install_tool go', blocked)
+        r = bash('m3_install_tool go INSTALL', blocked)
         assert r.returncode == 2 and "blocked" in r.stdout and not log.exists(), r
         print("PASS: Distrobox context blocks install")
 
-        r = bash('m3_install_tool go', env)
+        for confirmation in ("", "install", "Install", "YES"):
+            r = bash('m3_install_tool go ' + confirmation, env)
+            assert r.returncode == 2 and "exact INSTALL confirmation" in r.stdout, r
+            assert not log.exists(), "Unconfirmed Homebrew call occurred"
+        print("PASS: missing and incorrect confirmation never install")
+
+        r = bash('m3_install_tool go INSTALL', env)
         assert r.returncode == 0 and log.read_text() == "install --formula go\n", r
         print("PASS: explicit installation API calls only allowlisted mocked Homebrew")
+
+        fake_brew.write_text(
+            "#!/bin/bash\n"
+            'printf "%s\\n" "$*" >> "$M3_MOCK_LOG"\n'
+            'exit 9\n'
+        )
+        r = bash('m3_install_tool kubectl INSTALL', env)
+        assert r.returncode == 1 and "Homebrew failed" in r.stdout, r
+        assert log.read_text().splitlines()[-1] == "install --formula kubernetes-cli"
+        print("PASS: failed brew returns error without fallback")
 
         # A real menu interaction must be tested too; see test_m3_menu.py.
 
