@@ -168,6 +168,51 @@ def test_confirmed_tool_install_via_menu():
             term.close()
 
 
+def test_terraform_requires_explicit_confirmation():
+    with tempfile.TemporaryDirectory() as d:
+        bindir = Path(d) / "bin"
+        bindir.mkdir()
+        (bindir / "dirname").symlink_to("/usr/bin/dirname")
+        log = Path(d) / "brew-actions.log"
+        fake_brew = bindir / "brew"
+        fake_brew.write_text(
+            "#!/bin/bash\n"
+            'printf "%s\\n" "$*" >> "$M3_MOCK_LOG"\n'
+            "exit 0\n"
+        )
+        fake_brew.chmod(0o755)
+        env = dict(os.environ)
+        env["PATH"] = str(bindir)
+        env["HOME"] = d
+        env["M3_MOCK_LOG"] = str(log)
+        env.pop("DISTROBOX_ENTER_PATH", None)
+        env.pop("CONTAINER_ID", None)
+
+        term = Terminal(SCRIPT, env=env)
+        try:
+            term.expect(b"DevOps Workstation Setup")
+            term.send(b"\x1b[B" * 2 + b"\r")
+            term.expect(b"DevOps Tool Manager")
+            term.send(b"\x1b[B" * 5 + b" " + b"\r")
+            term.expect(b"brew tap hashicorp/tap && brew install --formula hashicorp/tap/terraform", timeout=5)
+            assert not log.exists(), "Terraform began installing without approval"
+            term.send(b"\r")
+            term.expect(b"Cancelled", timeout=5)
+            assert not log.exists(), "Terraform ran despite cancellation"
+            term.send(b"\r")
+            term.expect(b"DevOps Tool Manager", timeout=5)
+            term.send(b"\r")
+            term.expect(b"Type", timeout=5)
+            term.send(b"INSTALL\r")
+            term.expect(b"Homebrew completed successfully", timeout=5)
+            assert log.read_text().splitlines() == [
+                "tap hashicorp/tap", "install --formula hashicorp/tap/terraform"
+            ], "Unexpected Terraform install operations"
+            print("PASS: Terraform preview/cancel and confirmed tap+install")
+        finally:
+            term.close()
+
+
 def test_tool_batch_stops_after_first_failure():
     with tempfile.TemporaryDirectory() as d:
         bindir = Path(d) / "bin"
@@ -386,6 +431,7 @@ if __name__ == "__main__":
     test_settings_roundtrip()
     test_tool_manager_readonly()
     test_confirmed_tool_install_via_menu()
+    test_terraform_requires_explicit_confirmation()
     test_tool_batch_stops_after_first_failure()
     test_project_manager()
     test_info_return()
