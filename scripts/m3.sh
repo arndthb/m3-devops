@@ -309,7 +309,7 @@ update_m3() {
 
 main_menu() {
   local cursor=0 key next secret_count=0
-  local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Update m³' 'Settings' 'Info' 'Exit')
+  local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Container Manager' 'Update m³' 'Settings' 'Info' 'Exit')
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
     return 1
@@ -356,10 +356,11 @@ main_menu() {
           1) bash "$SCRIPT_DIR/health-check.sh" || printf 'Health check failed.\n'; pause_menu || return 0 ;;
           2) select_tools ;;
           3) bash "$SCRIPT_DIR/project-manager.sh" || printf 'Project scan failed.\n' ;;
-          4) if update_m3; then for seconds in 3 2 1; do printf '\r  Returning to main menu in %s... ' "$seconds"; sleep 1; done; printf '\n'; if [[ "${M3_RESTART_REQUIRED:-0}" == 1 ]]; then exec bash "$SCRIPT_DIR/m3.sh"; fi; else pause_menu || return 0; fi ;;
-          5) show_settings_page; pause_menu || return 0 ;;
-          6) show_settings; pause_menu || return 0 ;;
-          7) return 0 ;;
+          4) bash "$SCRIPT_DIR/container-manager.sh" || { printf "Container Manager failed.\n"; pause_menu; } ;;
+          5) if update_m3; then for seconds in 3 2 1; do printf '\r  Returning to main menu in %s... ' "$seconds"; sleep 1; done; printf '\n'; if [[ "${M3_RESTART_REQUIRED:-0}" == 1 ]]; then exec bash "$SCRIPT_DIR/m3.sh"; fi; else pause_menu || return 0; fi ;;
+          6) show_settings_page; pause_menu || return 0 ;;
+          7) show_settings; pause_menu || return 0 ;;
+          8) return 0 ;;
         esac
         ;;
     esac
