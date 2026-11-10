@@ -65,14 +65,16 @@ if [[ -r /proc/meminfo ]]; then
   avail=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
   if [[ "$total" =~ ^[0-9]+$ && "$avail" =~ ^[0-9]+$ ]] && ((total>0)); then
     used=$((100*(total-avail)/total))
-    if ((used>=90)); then status WARN 'Memory' "$used% used"; else status OK 'Memory' "$used% used"; fi
+    if ((used>=90)); then status WARN 'Memory' "$used% used, $((avail/1048576)) GiB available"; else status OK 'Memory' "$used% used, $((avail/1048576)) GiB available"; fi
   else status WARN 'Memory' 'Usage unavailable'; fi
 else status WARN 'Memory' 'Linux /proc unavailable'; fi
 disk=$(df -P "$HOME" 2>/dev/null | awk 'NR==2 {gsub(/%/,"",$5); print $5}')
+disk_free=$(df -Pk "$HOME" 2>/dev/null | awk 'NR==2 {printf "%.1f", $4/1048576}')
+disk_detail="${disk}% used, ${disk_free:-?} GiB free"
 if [[ "$disk" =~ ^[0-9]+$ ]]; then
-  if ((disk>=95)); then status FAIL 'Home disk' "$disk% used"
-  elif ((disk>=85)); then status WARN 'Home disk' "$disk% used"
-  else status OK 'Home disk' "$disk% used"; fi
+  if ((disk>=95)); then status FAIL 'Home disk' "$disk_detail"
+  elif ((disk>=85)); then status WARN 'Home disk' "$disk_detail"
+  else status OK 'Home disk' "$disk_detail"; fi
 else status WARN 'Home disk' 'Usage unavailable'; fi
 if command -v podman >/dev/null 2>&1; then
   if command -v timeout >/dev/null 2>&1 && timeout 4s podman info --format '{{.Host.Arch}}' >/dev/null 2>&1; then
@@ -88,5 +90,12 @@ if command -v git >/dev/null 2>&1; then status OK 'Git' 'Installed'
 else status WARN 'Git' 'Not installed'; fi
 if command -v gh >/dev/null 2>&1; then status OK 'GitHub CLI' 'Installed; auth not checked'
 else status WARN 'GitHub CLI' 'Not installed'; fi
-printf '\n  %d OK · %d info · %d warnings · %d critical\n' "$ok" "$info" "$warn" "$fail"
+health='HEALTHY'; health_color='32'
+if ((fail>0)); then health='CRITICAL'; health_color='31'
+elif ((warn>0)); then health='ATTENTION'; health_color='33'
+fi
+printf '\n  OVERALL HEALTH: \033[%sm%s\033[0m\n' "$health_color" "$health"
+printf '  %d OK · %d info · %d warnings · %d critical\n' "$ok" "$info" "$warn" "$fail"
+printf '  CPU warning >=80%%, critical >=95%% · RAM warning >=90%%\n'
+printf '  Home disk warning >=85%%, critical >=95%%\n'
 printf '  Read-only check. No changes made.\n'
