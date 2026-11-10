@@ -223,9 +223,35 @@ matrix_easter_egg() {
   sleep 7
 }
 
+update_m3() {
+  local repo answer branch
+  repo="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+  printf '\033[H\033[2J'
+  print_header 'Update m³'
+  printf '  Update m³ from GitHub (origin/main)? [y/N] '
+  IFS= read -r answer || return
+  [[ "$answer" == y || "$answer" == Y ]] || { printf '  Cancelled.\n'; return; }
+  if ! command -v git >/dev/null 2>&1 || [[ ! -d "$repo/.git" ]]; then
+    printf '  Git checkout unavailable. Update cancelled.\n'; return 1
+  fi
+  branch=$(git -C "$repo" symbolic-ref --quiet --short HEAD 2>/dev/null) || branch=''
+  if [[ "$branch" != main ]]; then
+    printf '  Expected branch main; current branch: %s. Update cancelled.\n' "${branch:-detached}"; return 1
+  fi
+  if [[ -n "$(git -C "$repo" status --porcelain 2>/dev/null)" ]]; then
+    printf '  Local changes detected. Update cancelled.\n'; return 1
+  fi
+  printf '\n  Updating m³...\n'
+  if git -C "$repo" pull --ff-only origin main; then
+    printf '\n  Update finished. Restart m³ to load the new version.\n'
+  else
+    printf '\n  Update failed; check your connection and Git output.\n'; return 1
+  fi
+}
+
 main_menu() {
   local cursor=0 key next secret_count=0
-  local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Settings' 'Info' 'Exit')
+  local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Update m³' 'Settings' 'Info' 'Exit')
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
     return 1
@@ -272,9 +298,10 @@ main_menu() {
           1) bash "$SCRIPT_DIR/health-check.sh" || printf 'Health check failed.\n'; pause_menu || return 0 ;;
           2) select_tools ;;
           3) bash "$SCRIPT_DIR/project-manager.sh" || printf 'Project scan failed.\n' ;;
-          4) show_settings_page; pause_menu || return 0 ;;
-          5) show_settings; pause_menu || return 0 ;;
-          6) return 0 ;;
+          4) update_m3; pause_menu || return 0 ;;
+          5) show_settings_page; pause_menu || return 0 ;;
+          6) show_settings; pause_menu || return 0 ;;
+          7) return 0 ;;
         esac
         ;;
     esac
