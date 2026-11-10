@@ -224,28 +224,47 @@ matrix_easter_egg() {
 }
 
 update_m3() {
-  local repo answer branch
+  local repo branch local_rev remote_rev answer status
   repo="$(cd -- "$SCRIPT_DIR/.." && pwd)"
   printf '\033[H\033[2J'
-  print_header 'Update m³'
-  printf '  Update m³ from GitHub (origin/main)? [y/N] '
-  IFS= read -r answer || return
-  [[ "$answer" == y || "$answer" == Y ]] || { printf '  Cancelled.\n'; return; }
+  print_header 'Check m³ Updates'
   if ! command -v git >/dev/null 2>&1 || [[ ! -d "$repo/.git" ]]; then
-    printf '  Git checkout unavailable. Update cancelled.\n'; return 1
+    printf '  Git checkout unavailable.\n'; return 1
   fi
   branch=$(git -C "$repo" symbolic-ref --quiet --short HEAD 2>/dev/null) || branch=''
   if [[ "$branch" != main ]]; then
-    printf '  Expected branch main; current branch: %s. Update cancelled.\n' "${branch:-detached}"; return 1
+    printf '  Expected branch main; current: %s\n' "${branch:-detached}"; return 1
   fi
-  if [[ -n "$(git -C "$repo" status --porcelain 2>/dev/null)" ]]; then
+  local_rev=$(git -C "$repo" rev-parse --short=7 HEAD 2>/dev/null) || return 1
+  printf '  Checking GitHub origin/main...\n'
+  if ! git -C "$repo" fetch origin main; then
+    printf '\n  Could not check for updates.\n'; return 1
+  fi
+  remote_rev=$(git -C "$repo" rev-parse --short=7 FETCH_HEAD 2>/dev/null) || return 1
+  printf '\n  Installed revision: %s\n  Available revision: %s\n' "$local_rev" "$remote_rev"
+  if [[ "$local_rev" == "$remote_rev" ]]; then
+    printf '\n  m³ is already up to date.\n'; return 0
+  fi
+  if git -C "$repo" merge-base --is-ancestor HEAD FETCH_HEAD; then
+    printf '\n  A newer revision is available.\n'
+  else
+    printf '\n  Branches diverged or local revision is ahead. No automatic update.\n'; return 1
+  fi
+  printf '  Install the available update now? [y/N] '
+  IFS= read -r answer || return 1
+  if [[ "$answer" != y && "$answer" != Y ]]; then
+    printf '  Update skipped.\n'; return 0
+  fi
+  status=$(git -C "$repo" status --porcelain 2>/dev/null) || { printf '  Could not check local changes.\n'; return 1; }
+  if [[ -n "$status" ]]; then
     printf '  Local changes detected. Update cancelled.\n'; return 1
   fi
-  printf '\n  Updating m³...\n'
-  if git -C "$repo" pull --ff-only origin main; then
-    printf '\n  Update finished. Restart m³ to load the new version.\n'
+  printf '\n  Installing update...\n'
+  if git -C "$repo" merge --ff-only FETCH_HEAD; then
+    printf '\n  Update finished: %s -> %s\n' "$local_rev" "$remote_rev"
+    printf '  Restart m³ to load the new version.\n'
   else
-    printf '\n  Update failed; check your connection and Git output.\n'; return 1
+    printf '\n  Update failed; review Git output.\n'; return 1
   fi
 }
 
