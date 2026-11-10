@@ -225,7 +225,7 @@ matrix_easter_egg() {
 
 main_menu() {
   local cursor=0 key next secret_count=0
-  local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'Settings' 'Info' 'Exit')
+  local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Settings' 'Info' 'Exit')
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
     return 1
@@ -271,9 +271,10 @@ main_menu() {
           0) bash "$SCRIPT_DIR/check-system.sh" || printf 'Diagnostics failed.\n'; pause_menu || return 0 ;;
           1) bash "$SCRIPT_DIR/health-check.sh" || printf 'Health check failed.\n'; pause_menu || return 0 ;;
           2) select_tools ;;
-          3) show_settings_page; pause_menu || return 0 ;;
-          4) show_settings; pause_menu || return 0 ;;
-          5) return 0 ;;
+          3) bash "$SCRIPT_DIR/project-manager.sh" || printf 'Project scan failed.\n'; pause_menu || return 0 ;;
+          4) show_settings_page; pause_menu || return 0 ;;
+          5) show_settings; pause_menu || return 0 ;;
+          6) return 0 ;;
         esac
         ;;
     esac
