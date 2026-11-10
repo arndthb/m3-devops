@@ -100,6 +100,11 @@ select_tools() {
       printf '       Automatic installation preview\n'
     fi
     if (( cursor == ${#tools[@]} + 1 )); then
+      printf '\033[32m >\033[0m     Update Check\n'
+    else
+      printf '       Update Check\n'
+    fi
+    if (( cursor == ${#tools[@]} + 2 )); then
       printf '\033[32m >\033[0m     Back to main menu\n'
     else
       printf '       Back to main menu\n'
@@ -114,8 +119,8 @@ select_tools() {
           if [[ "$choice" == '[' ]]; then
             IFS= read -rsn1 -t 0.15 choice || continue
             case "$choice" in
-              A) cursor=$(( (cursor + ${#tools[@]}) % (${#tools[@]} + 2) )) ;;
-              B) cursor=$(( (cursor + 1) % (${#tools[@]} + 2) )) ;;
+              A) cursor=$(( (cursor + ${#tools[@]}) % (${#tools[@]} + 3) )) ;;
+              B) cursor=$(( (cursor + 1) % (${#tools[@]} + 3) )) ;;
             esac
           fi
         else
@@ -129,10 +134,12 @@ select_tools() {
         fi
         ;;
       '')
-        if (( cursor == ${#tools[@]} + 1 )); then return; fi
+        if (( cursor == ${#tools[@]} + 2 )); then return; fi
         printf '\033[H\033[2J'
         if (( cursor == ${#tools[@]} )); then
           bash "$SCRIPT_DIR/preview-install.sh" || printf 'Preview failed.\n'
+        elif (( cursor == ${#tools[@]} + 1 )); then
+          bash "$SCRIPT_DIR/update-check.sh" || printf 'Update check failed.\n'
         else
           preview_selected
         fi
