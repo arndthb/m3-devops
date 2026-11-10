@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Shared read-only inventory for m³. Presence is not the same as a working service.
-m3_catalog=(git podman distrobox kubectl go terraform codium hermes docker compose kind make curl)
+m3_tool_catalog() {
+  printf '%s\n' git podman distrobox kubectl go terraform codium hermes docker compose kind make curl
+}
 
 m3_tool_label() {
   case "$1" in
