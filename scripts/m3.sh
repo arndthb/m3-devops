@@ -46,7 +46,7 @@ select_tools() {
   while true; do
     printf '\033[H\033[2J'
     printf 'm³ — Select DevOps tools\n'
-    printf '↑/↓ Navigate  Space Toggle  Enter Preview  Esc Back\n\n'
+    printf '\n'
     for i in "${!tools[@]}"; do
       if (( i == cursor )); then printf ' > '; else printf '   '; fi
       if [[ "${selected[i]}" == 1 ]]; then
@@ -55,7 +55,7 @@ select_tools() {
         printf '[ ] %s\n' "${tools[i]}"
       fi
     done
-    IFS= read -rsn1 key || return
+    printf '\n↑/↓ Navigate  Space Toggle  Enter Preview  Esc Back\n'\n    IFS= read -rsn1 key || return
     case "$key" in
       $'\033')
         # Arrow keys send ESC [ A/B; a lone ESC returns to the menu.
