@@ -43,7 +43,17 @@ if command -v timeout >/dev/null 2>&1; then
   if command -v bootc >/dev/null 2>&1; then
     os_backend='bootc'
     printf '\n  Checking Bluefin bootc update channel (up to 45 seconds)...\n'
-    if os_update_detail=$(timeout 45s sudo -n bootc upgrade --check 2>&1); then
+    # A staged image is authoritative even when the version label is unchanged.
+    bootc_status=''
+    if bootc_status=$(timeout 12s sudo -n bootc status 2>/dev/null); then
+      if [[ "$bootc_status" == *'Staged image:'* ]]; then
+        os_update_state='Update staged - reboot pending'
+        os_update_detail='A different image is staged for the next boot.'
+      fi
+    fi
+    if [[ "$os_update_state" == 'Update staged - reboot pending' ]]; then
+      :
+    elif os_update_detail=$(timeout 45s sudo -n bootc upgrade --check 2>&1); then
       case "${os_update_detail,,}" in
         *'no update available'*|*'no updates available'*|*'no upgrade available'*|*'already up to date'*) os_update_state='No OS update reported';;
         *'update available'*|*'upgrade available'*) os_update_state='OS update available';;
