@@ -69,7 +69,10 @@ if [[ -t 0 && -t 1 && ${#projects[@]} -gt 0 ]]; then
   cursor=0
   while true; do
     printf '\033[H\033[2J'
-    printf '\033[32m  ╭──────────────────────────────────────────────╮\033[0m\n'\n    printf '\033[32m  │\033[0m   \033[1;32mm³\033[0m   \033[1mDEVOPS WORKSTATION\033[0m                    \033[32m│\033[0m\n'\n    printf '\033[32m  │\033[0m   %-41.41s  \033[32m│\033[0m\n' 'DevOps Project Manager'\n    printf '\033[32m  ╰──────────────────────────────────────────────╯\033[0m\n\n'
+    printf '\033[32m  ╭──────────────────────────────────────────────╮\033[0m\n'
+    printf '\033[32m  │\033[0m   \033[1;32mm³\033[0m   \033[1mDEVOPS WORKSTATION\033[0m                    \033[32m│\033[0m\n'
+    printf '\033[32m  │\033[0m   %-41.41s  \033[32m│\033[0m\n' 'DevOps Project Manager'
+    printf '\033[32m  ╰──────────────────────────────────────────────╯\033[0m\n\n'
     for i in "${!projects[@]}"; do
       dir="${projects[i]}"
       if (( i == cursor )); then printf '\033[32m >\033[0m '; else printf '   '; fi
@@ -91,7 +94,11 @@ if [[ -t 0 && -t 1 && ${#projects[@]} -gt 0 ]]; then
       '')
         dir="${projects[cursor]}"
         printf '\033[H\033[2J'
-        printf '\033[32m  ╭──────────────────────────────────────────────╮\033[0m\n'\n        printf '\033[32m  │\033[0m   \033[1;32mm³\033[0m   \033[1mDEVOPS WORKSTATION\033[0m                    \033[32m│\033[0m\n'\n        printf '\033[32m  │\033[0m   %-41.41s  \033[32m│\033[0m\n' 'Project details'\n        printf '\033[32m  ╰──────────────────────────────────────────────╯\033[0m\n\n'\n        printf '  Project: %s\n  Path: %s\n' "${dir#"$HOME"/}" "$dir"
+        printf '\033[32m  ╭──────────────────────────────────────────────╮\033[0m\n'
+        printf '\033[32m  │\033[0m   \033[1;32mm³\033[0m   \033[1mDEVOPS WORKSTATION\033[0m                    \033[32m│\033[0m\n'
+        printf '\033[32m  │\033[0m   %-41.41s  \033[32m│\033[0m\n' 'Project details'
+        printf '\033[32m  ╰──────────────────────────────────────────────╯\033[0m\n\n'
+        printf '  Project: %s\n  Path: %s\n' "${dir#"$HOME"/}" "$dir"
         if [[ -d "$dir/.git" || -f "$dir/.git" ]] && command -v git >/dev/null 2>&1; then
           printf '\n  Branch: '
           branch=$(git -C "$dir" symbolic-ref --quiet --short HEAD 2>/dev/null) || branch='detached'
@@ -110,8 +117,14 @@ if [[ -t 0 && -t 1 && ${#projects[@]} -gt 0 ]]; then
         done
         printf '%s\n\n  Top-level entries (first 15):\n' "$found"
         find "$dir" -mindepth 1 -maxdepth 1 -printf '    %f\n' 2>/dev/null | sort | head -n 15
-        printf '\n  Controls: Enter = project list · Esc = main menu\n'\n        printf '  Read-only. Press Enter to return...'
-        IFS= read -r _ || break ;;
+        printf '\n  Read-only · Enter: project list · Esc: main menu\n'
+        while true; do
+          IFS= read -rsn1 detail_key || break
+          case "$detail_key" in
+            '') break ;;
+            $'\033') exit 0 ;;
+          esac
+        done ;;
       q|Q) break ;;
     esac
   done
