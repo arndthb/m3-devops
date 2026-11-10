@@ -101,9 +101,14 @@ def test_tool_manager_paging():
 
 
 def test_readiness_menu_return():
+    # Isolate PATH: the CI runner might have a slow Podman/Docker daemon.
     with tempfile.TemporaryDirectory() as d:
+        bindir = Path(d) / "bin"
+        bindir.mkdir()
+        (bindir / "dirname").symlink_to("/usr/bin/dirname")
         env = dict(os.environ)
         env["HOME"] = d
+        env["PATH"] = str(bindir)
         term = Terminal(SCRIPT, rows=24, cols=80, env=env)
         try:
             term.expect(b"DevOps Workstation Setup")
