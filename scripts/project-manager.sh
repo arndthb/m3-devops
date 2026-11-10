@@ -13,6 +13,8 @@ declare -A seen=()
 count=0
 skipped=0
 projects=()
+project_git=()
+project_compose=()
 printf '  %-28s %-18s %s\n' 'PROJECT' 'GIT' 'COMPOSE'
 printf '  %s\n' '──────────────────────────────────────────────────────────────────────'
 for root in "${roots[@]}"; do
@@ -55,6 +57,8 @@ for root in "${roots[@]}"; do
       if [[ -f "$dir/$file" ]]; then compose="$file"; break; fi
     done
     projects+=("$dir")
+    project_git+=("$git_state")
+    project_compose+=("$compose")
     printf '  %-28.28s %-18.18s %s\n' "$name" "$git_state" "$compose"
     printf '    Path: %s\n' "$dir"
     count=$((count+1))
@@ -73,12 +77,15 @@ if [[ -t 0 && -t 1 && ${#projects[@]} -gt 0 ]]; then
     printf '\033[32m  │\033[0m   \033[1;32mm³\033[0m   \033[1mDEVOPS WORKSTATION\033[0m                    \033[32m│\033[0m\n'
     printf '\033[32m  │\033[0m   %-41.41s  \033[32m│\033[0m\n' 'DevOps Project Manager'
     printf '\033[32m  ╰──────────────────────────────────────────────╯\033[0m\n\n'
+    printf '  %-28s %-18s %s\n' "PROJECT" "GIT" "COMPOSE"
+    printf '  %s\n' "──────────────────────────────────────────────────────────────────────"
     for i in "${!projects[@]}"; do
       dir="${projects[i]}"
       if (( i == cursor )); then printf '\033[32m >\033[0m '; else printf '   '; fi
-      printf '%s\n' "${dir#"$HOME"/}"
+      printf '%-28.28s %-18.18s %s\n' "${dir#"$HOME"/}" "${project_git[i]}" "${project_compose[i]}"
     done
-    printf '\n  ↑/↓ Select  Enter Details  Esc Back\n'
+    printf '\n  * = local changes · ? = status unavailable\n'
+    printf '  ↑/↓ Select  Enter Details  Esc Back\n'
     IFS= read -rsn1 key || break
     case "$key" in
       $'\033')
