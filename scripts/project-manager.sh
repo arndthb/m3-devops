@@ -186,7 +186,8 @@ navigate() {
 
 details=()
 build_details() {
-  local index="$1" dir="${projects[index]}" branch origin compose line
+  local index="$1" branch origin compose line
+  local dir="${projects[index]}"
   details=()
   details+=("Project: ${project_names[index]}")
   details+=("Path: $dir")
