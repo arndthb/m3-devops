@@ -8,6 +8,8 @@ if [[ -t 1 ]]; then
 fi
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/ui.sh
+source "$SCRIPT_DIR/lib/ui.sh"
 items=('Containers' 'Images' 'Volumes' 'Networks' 'System disk usage' 'Back')
 icons=('[ C ]' '[ I ]' '[ V ]' '[ N ]' '[ D ]' '[ ← ]')
 nerd_icons=('[ 󰡨 ]' '[ 󰋊 ]' '[ 󰕫 ]' '[ 󰖟 ]' '[ 󰋊 ]' '[ ← ]')
@@ -30,49 +32,25 @@ run_podman() {
 }
 
 icon_mode() {
-  local config="$HOME/.config/m3/icon-mode"
-  if [[ -r "$config" ]] && [[ "$(head -n 1 "$config")" == nerd ]]; then
-    printf nerd
-  else
-    printf classic
-  fi
+  m3_ui_icon_mode
 }
 
 terminal_size() {
-  read -r term_rows term_cols < <(stty size 2>/dev/null || printf '24 80\n')
-  (( term_rows > 0 )) || term_rows=24
-  (( term_cols > 0 )) || term_cols=80
+  m3_ui_terminal_size
+  term_rows="$M3_ROWS"
+  term_cols="$M3_COLS"
   row_step=1
   if (( term_rows >= 29 && term_cols >= 65 )); then row_step=2; fi
 }
 
 header() {
-  printf '\033[?25l\033[H\033[2J'
-  if (( term_cols >= 56 )); then
-    printf '\033[1;32m  ███╗   ███╗³\033[0m   \033[1;37mDEVOPS\033[0m\n'
-    printf '\033[1;32m  ████╗ ████║ \033[0m   \033[1;37mWORKSTATION\033[0m\n'
-    printf '\033[1;32m  ██╔████╔██║ \033[0m   \033[2mPODMAN · READ-ONLY\033[0m\n'
-    printf '\033[1;32m  ██║╚██╔╝██║ \033[0m   \033[2mCONTAINERS & STORAGE\033[0m\n'
-    printf '\033[1;32m  ╚═╝ ╚═╝ ╚═╝ \033[0m   \033[36mContainer Manager\033[0m\n'
-    printf '\033[32m  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n\n'
-  else
-    printf '\033[1;32m  m³ DEVOPS WORKSTATION\033[0m\n'
-    printf '  Container Manager\n'
-    printf '  Podman · read-only\n\n'
-    printf '\n'
-    printf '  ━━━━━━━━━━━━━━━━━━━━━━━\n\n'
-  fi
+  m3_ui_header 'Container Manager' 'CONTAINERS · READ-ONLY' "$term_cols"
 }
 
 render_menu_row() {
-  local index="$1"
-  local row=$((8 + index * row_step))
-  printf '\033[%d;1H\033[2K' "$row"
-  if (( index == cursor )); then
-    printf '  \033[1;30;42m ▸ \033[0m \033[1;32m%s\033[0m  \033[1;37m%s\033[0m' "${icons[index]}" "${items[index]}"
-  else
-    printf '      \033[2;36m%s\033[0m  %s' "${icons[index]}" "${items[index]}"
-  fi
+  local index="$1" selected=0
+  (( index == cursor )) && selected=1
+  m3_ui_row "$((8 + index * row_step))" "$selected" "${icons[index]}" "${items[index]}"
 }
 
 render_menu() {
