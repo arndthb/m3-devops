@@ -75,10 +75,17 @@ select_tools() {
         name="${actions[index-${#tools[@]}]}"
         line="$checked $name"
       fi
+      # Avoid terminal autowrap: strip ANSI only for measuring visible width.
+      local plain="$line" maxwidth=$((cols-9))
+      plain="$(printf '%b' "$plain" | sed -E 's/\x1B\[[0-9;]*[[:alpha:]]//g')"
+      if (( ${#plain} > maxwidth )); then
+        # Render a compact, uncolored row instead of overflowing.
+        line="${plain:0:maxwidth}"
+      fi
       if ((index==cursor)); then
-        printf '  \033[1;30;42m ▸ \033[0m  \033[1m%b\033[0m\n' "$line"
+        printf '  \033[1;30;42m ▸ \033[0m  \033[1m%b\033[0m' "$line"
       else
-        printf '       %b\n' "$line"
+        printf '       %b' "$line"
       fi
     done
   }
@@ -91,12 +98,14 @@ select_tools() {
 
     if (( redraw )); then
     m3_ui_header 'DevOps Tool Manager' 'TOOLCHAIN · HOST INVENTORY' "$cols"
-    printf '\033[8;1H\033[2K     SELECT  %-16s  %s\n' 'TOOL' 'STATUS'
-    printf '\033[9;1H\033[2K  ──────────────────────────────────────────\n'
-    render_tool_rows $(seq "$page_start" "$((page_start+page_size-1))")
-    printf '\033[%d;1H\033[2K  %d–%d / %d entries\n' "$((rows-3))" \
+    printf '\033[8;1H\033[2K     SELECT  %-16s  %s' 'TOOL' 'STATUS'
+    printf '\033[9;1H\033[2K  ──────────────────────────────────────────'
+    for ((i=page_start; i<page_start+page_size && i<total; i++)); do
+      render_tool_rows "$i"
+    done
+    printf '\033[%d;1H\033[2K  %d–%d / %d entries' "$((rows-3))" \
       "$((page_start+1))" "$((page_start+page_size<total?page_start+page_size:total))" "$total"
-    printf '\033[%d;1H\033[2K  [-] Installed · [x] Selected · [ ] Missing\n' "$((rows-2))"
+    printf '\033[%d;1H\033[2K  [-] Installed · [x] Selected · [ ] Missing' "$((rows-2))"
     printf '\033[%d;1H\033[2K  ↑/↓ Navigate  Space Select  Enter Open  Esc Back' "$((rows-1))"
     redraw=0
     fi
