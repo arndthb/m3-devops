@@ -6,7 +6,7 @@ m³ aims to inspect and eventually automate DevOps workstation setup. The initia
 
 ## v0.1 – Read-only diagnostics
 
-The initial script detects the Linux distribution and checks whether these commands are available: Git, Podman, Distrobox, kubectl, Go, and Terraform. It reports missing tools without installing software or changing configuration.
+The diagnostics check the Linux distribution and detect Git, Podman, Distrobox, kubectl, Go, Terraform, VSCodium, Hermes, Docker CLI, Compose, kind, make, and curl. It reports missing tools without installing software or changing configuration.
 
 Run on an existing Linux workstation:
 
@@ -35,11 +35,26 @@ Run `m3` to open the terminal interface. The current menu includes:
 
 - **System diagnostics:** inspect the distribution and availability of development tools.
 - **Workstation health check:** inspect CPU, memory, disk, network, Podman, Kubernetes, and Git/GitHub CLI, with a summary status.
-- **DevOps Tool Manager:** inspect installed tools, select missing tools with **Space**, then press **Enter** to review exactly which Homebrew commands are approved. Nothing is installed unless you type the case-sensitive word **INSTALL**. On a Bluefin host with Homebrew, m³ initially supports installing **Git**, **Go**, **kubectl** (`kubernetes-cli`) and **Terraform** (`hashicorp/tap/terraform`); **Podman** and **Distrobox** remain manual-review only. The separate **Automatic installation preview** is strictly read-only. Installation is refused as root, from Distrobox/a detected container, or without Homebrew. No sudo, OS-image changes, or unattended installation are performed.
+- **DevOps Tool Manager:** inspect installed tools, select missing tools with **Space**, then press **Enter** to review exactly which Homebrew commands are approved. Nothing is installed unless you type the case-sensitive word **INSTALL**. On a Bluefin host with Homebrew, m³ initially supports installing **Git**, **Go**, **kubectl** (`kubernetes-cli`) and **Terraform** (`hashicorp/tap/terraform`); **Podman** and **Distrobox** remain manual-review only. The menu also **detects VSCodium, Hermes, Docker, Compose, kind, make and curl**, but does **not** automatically install those additional tools. The separate **Automatic installation preview** is strictly read-only. Installation is refused as root, from Distrobox/a detected container, or without Homebrew. No sudo, OS-image changes, or unattended installation are performed.
 - **Container Manager:** browse Podman containers, images, volumes, networks, and disk usage without making changes. The menu uses the same highlighted selection and adaptive spacing as the main menu. Automatically generated hexadecimal volume IDs are shortened and labeled; use `podman volume inspect <volume-name>` for full metadata.
 - **DevOps Project Manager:** discover local Git and Compose projects, browse with ↑/↓, and open details with Enter.
 - **Update m³ / Check Updates:** fetch the latest `origin/main` revision, display the installed and available Git commit IDs (the project does not yet publish separate semantic version numbers), and offer to install an available update with explicit confirmation. Installation is fast-forward only and is refused if local changes exist or branches have diverged. When already current, or after a successful/skipped update, a visible 3–2–1 countdown returns to the main menu. The running menu reloads itself after a successful update to use the new code.
 - **Settings and information:** view available configuration and project information.
+
+### Bluefin workstation tool detection
+
+The **DevOps Tool Manager** lists 13 development components, with paging on smaller terminals. Use **↑/↓** to browse, **Space** to select missing components, and **Enter** to review. It reports tools available in the *current environment*, not in every Distrobox.
+
+- **VSCodium**: detected via the `codium` command or the Flatpak ID `com.vscodium.codium`.
+- **Hermes**: detected via `hermes`, `hermes-agent`, or an executable `~/.local/bin/hermes`. Detection alone does not validate login or provider configuration.
+- **Docker**: the `docker` command is checked independently. Its presence does not prove the Docker daemon is running.
+- **Compose**: checks `docker compose version`, then standalone `docker-compose` or `podman-compose`. Compose does not imply a working Docker engine.
+- **kind**: checks the `kind` command; creating a cluster still requires a working container provider.
+- **make**, **curl**, **git**, **Go** and **kubectl**: checks command availability on the current PATH.
+
+**Bluefin ships with Podman-centric workflows**; m³ does not assume Docker Desktop is required on Linux or replace Podman with Docker. For the original macOS/Windows setup, Docker Desktop with Compose should have at least **6 GiB RAM** allocated. On Bluefin, configure the kind provider separately and verify it with an actual cluster test.
+
+Installation remains restricted to the reviewed Homebrew allowlist (Git, Go, kubectl, Terraform) and requires the exact confirmation `INSTALL`. VSCodium, Hermes, Docker, Compose, kind, make and curl are *detection-only* until suitable Bluefin-safe installation methods are reviewed. No privileged operating-system changes occur.
 
 ### DevOps Project Manager
 
