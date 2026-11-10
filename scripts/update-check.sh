@@ -35,6 +35,25 @@ version_of() {
     printf '%s' "${BASH_REMATCH[1]}"
   else printf '%s' 'unknown'; fi
 }
+# rpm-ostree --check queries the OS update channel without deploying an update.
+# This is a system-level result, never proof that a specific tool has changed.
+os_update_state='Not checked'
+os_update_detail=''
+if command -v rpm-ostree >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; then
+  printf '\n  Checking Bluefin OS update channel (up to 35 seconds)...\n'
+  if os_update_detail=$(timeout 35s rpm-ostree upgrade --check 2>&1); then
+    if [[ "$os_update_detail" == *'No upgrade available'* || "$os_update_detail" == *'No updates available'* ]]; then
+      os_update_state='No OS update reported'
+    elif [[ "$os_update_detail" == *'AvailableUpdate'* || "$os_update_detail" == *'Available update'* || "$os_update_detail" == *'Update available'* || "$os_update_detail" == *'Diff:'* ]]; then
+      os_update_state='OS update available'
+    else
+      os_update_state='Check completed; inspect output'
+    fi
+  else
+    os_update_state='Check failed or timed out'
+  fi
+fi
+printf '\n'
 for tool in git podman distrobox kubectl go terraform; do
   version='-'
   if command -v "$tool" >/dev/null 2>&1; then
@@ -64,7 +83,7 @@ for tool in git podman distrobox kubectl go terraform; do
         update='OS update channel'
         # A staged deployment is evidence of an OS update, not proof this tool changed.
         if command -v rpm-ostree >/dev/null 2>&1; then
-          update='Check via ujust update'
+          update='OS channel: see below'
         fi
       fi
     fi
@@ -81,6 +100,11 @@ for tool in git podman distrobox kubectl go terraform; do
     printf '  %-12s %-12s %-13s %s\n' "$tool" "$version" "$source" "$update"
   fi
 done
+printf '\n  BLUEFIN OS UPDATE CHANNEL: %s\n' "$os_update_state"
+if [[ "$os_update_state" == 'Check completed; inspect output' || "$os_update_state" == 'Check failed or timed out' ]]; then
+  printf '  %s\n' "$os_update_detail" | head -n 8
+fi
+printf '  This is an OS-wide check, not a per-tool update verdict.\n'
 printf '\n  Homebrew checks use local package metadata.\n'
 printf '  Bluefin OS tools update together via the OS update channel.\n  Source detection does not prove an update is available.\n'
-printf '  No network access or package changes requested.\n'
+printf '  OS check may use network; no upgrade or deployment requested.\n'
