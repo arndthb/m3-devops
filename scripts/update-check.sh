@@ -35,22 +35,35 @@ version_of() {
     printf '%s' "${BASH_REMATCH[1]}"
   else printf '%s' 'unknown'; fi
 }
-# rpm-ostree --check queries the OS update channel without deploying an update.
-# This is a system-level result, never proof that a specific tool has changed.
+# Read-only OS image update check; bootc preferred on Bluefin.
 os_update_state='Not checked'
 os_update_detail=''
-if command -v rpm-ostree >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; then
-  printf '\n  Checking Bluefin OS update channel (up to 35 seconds)...\n'
-  if os_update_detail=$(timeout 35s rpm-ostree upgrade --check 2>&1); then
-    if [[ "$os_update_detail" == *'No upgrade available'* || "$os_update_detail" == *'No updates available'* ]]; then
-      os_update_state='No OS update reported'
-    elif [[ "$os_update_detail" == *'AvailableUpdate'* || "$os_update_detail" == *'Available update'* || "$os_update_detail" == *'Update available'* || "$os_update_detail" == *'Diff:'* ]]; then
-      os_update_state='OS update available'
+os_backend='none'
+if command -v timeout >/dev/null 2>&1; then
+  if command -v bootc >/dev/null 2>&1; then
+    os_backend='bootc'
+    printf '\n  Checking Bluefin bootc update channel (up to 45 seconds)...\n'
+    if os_update_detail=$(timeout 45s bootc upgrade --check 2>&1); then
+      case "${os_update_detail,,}" in
+        *'no update available'*|*'no updates available'*|*'no upgrade available'*|*'already up to date'*) os_update_state='No OS update reported';;
+        *'update available'*|*'upgrade available'*) os_update_state='OS update available';;
+        *) os_update_state='Check completed; inspect output';;
+      esac
     else
-      os_update_state='Check completed; inspect output'
+      os_update_state='Check failed or timed out'
     fi
-  else
-    os_update_state='Check failed or timed out'
+  elif command -v rpm-ostree >/dev/null 2>&1; then
+    os_backend='rpm-ostree'
+    printf '\n  Checking rpm-ostree update channel (up to 45 seconds)...\n'
+    if os_update_detail=$(timeout 45s rpm-ostree upgrade --check 2>&1); then
+      case "${os_update_detail,,}" in
+        *'no upgrade available'*|*'no updates available'*) os_update_state='No OS update reported';;
+        *'availableupdate'*|*'available update'*|*'update available'*|*'diff:'*) os_update_state='OS update available';;
+        *) os_update_state='Check completed; inspect output';;
+      esac
+    else
+      os_update_state='Check failed or timed out'
+    fi
   fi
 fi
 printf '\n'
@@ -85,7 +98,7 @@ for tool in git podman distrobox kubectl go terraform; do
         source='RPM / Bluefin'
         update='OS update channel'
         # A staged deployment is evidence of an OS update, not proof this tool changed.
-        if command -v rpm-ostree >/dev/null 2>&1; then
+        if [[ "$os_backend" != none ]]; then
           update='OS channel: see below'
         fi
       fi
@@ -112,8 +125,8 @@ for tool in git podman distrobox kubectl go terraform; do
   fi
 done
 printf '\n  Note: System path does not confirm RPM ownership.\n'
-printf '  For unresolved tools, inspect: command -v TOOL; rpm -qf PATH\n'
-printf '\n  BLUEFIN OS UPDATE CHANNEL: %s\n' "$os_update_state"
+printf '  System-path tools may be part of the Bluefin image.\n'
+printf '\n  BLUEFIN OS UPDATE CHANNEL (%s): %s\n' "$os_backend" "$os_update_state"
 if [[ "$os_update_state" == 'Check completed; inspect output' || "$os_update_state" == 'Check failed or timed out' ]]; then
   printf '  %s\n' "$os_update_detail" | head -n 8
 fi
