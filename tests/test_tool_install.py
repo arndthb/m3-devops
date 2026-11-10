@@ -37,10 +37,13 @@ def run_checks():
         r = bash('m3_install_command kubectl', env)
         assert r.returncode == 0 and r.stdout == 'brew install --formula kubernetes-cli', r
         r = bash('m3_install_command terraform', env)
+        assert r.returncode == 0 and r.stdout == ('brew tap hashicorp/tap && '
+               'brew install --formula hashicorp/tap/terraform'), r
+        r = bash('m3_install_command podman', env)
         assert r.returncode != 0 and not log.exists(), r
-        print("PASS: formula allowlist and reject unsupported tools")
+        print("PASS: approved Terraform two-step plan and unsupported tool rejection")
 
-        r = bash('m3_install_tool terraform INSTALL', env)
+        r = bash('m3_install_tool podman INSTALL', env)
         assert r.returncode == 2 and not log.exists(), r
         print("PASS: unsupported install never calls Homebrew")
 
@@ -58,6 +61,25 @@ def run_checks():
         r = bash('m3_install_tool go INSTALL', env)
         assert r.returncode == 0 and log.read_text() == "install --formula go\n", r
         print("PASS: explicit installation API calls only allowlisted mocked Homebrew")
+
+        log.unlink()
+        r = bash('m3_install_tool terraform INSTALL', env)
+        assert r.returncode == 0, r
+        assert log.read_text().splitlines() == [
+            'tap hashicorp/tap', 'install --formula hashicorp/tap/terraform'
+        ], r
+        print("PASS: Terraform taps HashiCorp then installs the approved formula")
+
+        log.unlink()
+        fake_brew.write_text(
+            "#!/bin/bash\n"
+            'printf "%s\\n" "$*" >> "$M3_MOCK_LOG"\n'
+            'if [[ "$1" == tap ]]; then exit 9; fi\n'
+        )
+        r = bash('m3_install_tool terraform INSTALL', env)
+        assert r.returncode == 1 and 'installation not attempted' in r.stdout, r
+        assert log.read_text().splitlines() == ['tap hashicorp/tap']
+        print("PASS: failed tap prevents the Terraform installation")
 
         fake_brew.write_text(
             "#!/bin/bash\n"
