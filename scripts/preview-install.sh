@@ -10,7 +10,7 @@ green=$'\033[32m'
 yellow=$'\033[33m'
 dim=$'\033[2m'
 reset=$'\033[0m'
-tools=("${m3_catalog[@]}")
+mapfile -t tools < <(m3_tool_catalog)
 missing=()
 installed=0
 printf '\033[H\033[2J'
