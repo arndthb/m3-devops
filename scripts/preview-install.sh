@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 # m³ automatic installation preview — read-only, never installs software.
 set -u
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/tool-detect.sh
+source "$SCRIPT_DIR/lib/tool-detect.sh"
+# shellcheck source=lib/tool-install.sh
+source "$SCRIPT_DIR/lib/tool-install.sh"
 green=$'\033[32m'
 yellow=$'\033[33m'
 dim=$'\033[2m'
 reset=$'\033[0m'
-tools=(git podman distrobox kubectl go terraform)
+tools=("${m3_catalog[@]}")
 missing=()
 installed=0
 printf '\033[H\033[2J'
@@ -30,12 +35,12 @@ fi
 printf '\n  %-16s %-12s %s\n' 'TOOL' 'STATUS' 'ACTION'
 printf '  %s\n' '──────────────────────────────────────────────────────'
 for tool in "${tools[@]}"; do
-  if command -v "$tool" >/dev/null 2>&1; then
+  if m3_tool_present "$tool"; then
     installed=$((installed+1))
-    printf '  %-16s %s%-12s%s  %s\n' "$tool" "$green" '✓ Installed' "$reset" 'None'
+    printf '  %-16s %s%-12s%s  %s\n' "$(m3_tool_label "$tool")" "$green" '✓ Installed' "$reset" "$(m3_tool_source "$tool")"
   else
     missing+=("$tool")
-    printf '  %-16s %s%-12s%s  %s\n' "$tool" "$yellow" '○ Missing' "$reset" 'Review'
+    printf '  %-16s %s%-12s%s  %s\n' "$(m3_tool_label "$tool")" "$yellow" '○ Missing' "$reset" 'Review'
   fi
 done
 printf '\n  %sSUMMARY%s\n' "$green" "$reset"
@@ -43,24 +48,12 @@ printf '  %d installed  ·  %d missing  ·  %d total\n' "$installed" "${#missing
 if (( ${#missing[@]} > 0 )); then
   printf '\n  %sSUGGESTED NEXT STEPS (NOT EXECUTED)%s\n' "$green" "$reset"
   for tool in "${missing[@]}"; do
-    printf '  %s\n' "$tool"
-    case "$tool" in
-      podman|distrobox)
-        printf '    %sBluefin-integrated tool: review OS documentation%s\n' "$dim" "$reset" ;;
-      terraform)
-        if (( brew_available )); then
-          printf '    brew tap hashicorp/tap\n'
-          printf '    brew install hashicorp/tap/terraform\n'
-        else
-          printf '    %sReview Bluefin-compatible installation method%s\n' "$dim" "$reset"
-        fi ;;
-      *)
-        if (( brew_available )); then
-          printf '    brew install %s\n' "$tool"
-        else
-          printf '    %sReview Bluefin-compatible installation method%s\n' "$dim" "$reset"
-        fi ;;
-    esac
+    printf '  %s\n' "$(m3_tool_label "$tool")"
+    if (( brew_available )) && command="$(m3_install_command "$tool")"; then
+      printf '    %s\n' "$command"
+    else
+      printf '    %s%s%s\n' "$dim" "$(m3_tool_hint "$tool")" "$reset"
+    fi
   done
 else
   printf '\n  %sAll checked tools are available.%s\n' "$green" "$reset"
