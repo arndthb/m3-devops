@@ -136,7 +136,7 @@ show_settings() {
   if command -v git >/dev/null 2>&1; then
     revision="$(git -C "$SCRIPT_DIR/.." rev-parse --short HEAD 2>/dev/null)" || revision='unavailable'
   fi
-  print_header 'Settings & About'
+  print_header 'Info'
   printf '\033[1m  ABOUT m³\033[0m\n'
   printf '  %-15s %s\n' 'Version' 'v0.1 (development)'
   printf '  %-15s %s\n' 'Revision' "$revision"
@@ -154,9 +154,18 @@ show_settings() {
 }
 
 
+show_settings_page() {
+  print_header 'Settings'
+  printf '\033[1m  SETTINGS\033[0m\n'
+  printf '  Installation mode: read-only (simulation only)\n'
+  printf '  Target platform: Bluefin Linux\n'
+  printf '  No configurable options are available yet.\n'
+}
+
+
 main_menu() {
   local cursor=0 key next
-  local -a items=('System diagnostics' 'Installation preview' 'Select DevOps tools' 'Settings' 'Exit')
+  local -a items=('System diagnostics' 'Installation preview' 'Select DevOps tools' 'Settings' 'Info' 'Exit')
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
     return 1
@@ -193,8 +202,9 @@ main_menu() {
           0) bash "$SCRIPT_DIR/check-system.sh" || printf 'Diagnostics failed.\n'; pause_menu || return 0 ;;
           1) bash "$SCRIPT_DIR/preview-install.sh" || printf 'Preview failed.\n'; pause_menu || return 0 ;;
           2) select_tools ;;
-          3) show_settings; pause_menu || return 0 ;;
-          4) return 0 ;;
+          3) show_settings_page; pause_menu || return 0 ;;
+          4) show_settings; pause_menu || return 0 ;;
+          5) return 0 ;;
         esac
         ;;
     esac
