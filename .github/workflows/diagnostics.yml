@@ -29,5 +29,7 @@ jobs:
         run: python3 tests/test_tool_detect.py
       - name: Mocked provider readiness checks
         run: python3 tests/test_readiness.py
+      - name: Verify Docker/Compose inspection never mutates host
+        run: python3 tests/test_docker_check.py
       - name: Run read-only diagnostics
         run: bash scripts/check-system.sh
