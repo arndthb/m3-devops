@@ -27,7 +27,7 @@ m3_tool_present() {
       fi
       return 1 ;;
     chatgpt)
-      command -v chatgpt >/dev/null 2>&1 || rpm -q chatgpt >/dev/null 2>&1 ;;
+      command -v chatgpt >/dev/null 2>&1 || { command -v rpm >/dev/null 2>&1 && rpm -q chatgpt >/dev/null 2>&1; } ;;
     codex)
       command -v codex >/dev/null 2>&1 || [[ -x "$HOME/.local/bin/codex" ]] ;;
     hermes)
