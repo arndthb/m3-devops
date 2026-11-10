@@ -31,17 +31,9 @@ print_header() {
 }
 
 pause_menu() {
-  local key
   printf '\nPress Enter to return to the menu...'
-  # Accept the Enter key in terminals that send either LF or CR.
-  while IFS= read -rsn1 key; do
-    if [[ "$key" == $'\n' || "$key" == $'\r' ]]; then
-      break
-    fi
-  done
-  printf '\n'
-}
-select_tools() {
+  IFS= read -r _ || return 1
+}select_tools() {
   local i choice key cursor=0
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'Interactive selection requires a terminal.\n'
