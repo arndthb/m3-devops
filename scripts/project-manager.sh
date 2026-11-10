@@ -69,10 +69,10 @@ if [[ -t 0 && -t 1 && ${#projects[@]} -gt 0 ]]; then
   cursor=0
   while true; do
     printf '\033[H\033[2J'
-    printf '  m³ — DevOps Project Manager\n\n'
+    printf '\033[32m  ╭──────────────────────────────────────────────╮\033[0m\n'\n    printf '\033[32m  │\033[0m   \033[1;32mm³\033[0m   \033[1mDEVOPS WORKSTATION\033[0m                    \033[32m│\033[0m\n'\n    printf '\033[32m  │\033[0m   %-41.41s  \033[32m│\033[0m\n' 'DevOps Project Manager'\n    printf '\033[32m  ╰──────────────────────────────────────────────╯\033[0m\n\n'
     for i in "${!projects[@]}"; do
       dir="${projects[i]}"
-      if (( i == cursor )); then printf ' > '; else printf '   '; fi
+      if (( i == cursor )); then printf '\033[32m >\033[0m '; else printf '   '; fi
       printf '%s\n' "${dir#"$HOME"/}"
     done
     printf '\n  ↑/↓ Select  Enter Details  Esc Back\n'
@@ -91,7 +91,7 @@ if [[ -t 0 && -t 1 && ${#projects[@]} -gt 0 ]]; then
       '')
         dir="${projects[cursor]}"
         printf '\033[H\033[2J'
-        printf '  m³ — Project details\n\n  Project: %s\n  Path: %s\n' "${dir#"$HOME"/}" "$dir"
+        printf '\033[32m  ╭──────────────────────────────────────────────╮\033[0m\n'\n        printf '\033[32m  │\033[0m   \033[1;32mm³\033[0m   \033[1mDEVOPS WORKSTATION\033[0m                    \033[32m│\033[0m\n'\n        printf '\033[32m  │\033[0m   %-41.41s  \033[32m│\033[0m\n' 'Project details'\n        printf '\033[32m  ╰──────────────────────────────────────────────╯\033[0m\n\n'\n        printf '  Project: %s\n  Path: %s\n' "${dir#"$HOME"/}" "$dir"
         if [[ -d "$dir/.git" || -f "$dir/.git" ]] && command -v git >/dev/null 2>&1; then
           printf '\n  Branch: '
           branch=$(git -C "$dir" symbolic-ref --quiet --short HEAD 2>/dev/null) || branch='detached'
