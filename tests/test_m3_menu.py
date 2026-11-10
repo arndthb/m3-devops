@@ -47,7 +47,7 @@ class Terminal:
 
     def close(self):
         try:
-            os.kill(self.pid, 15)
+            os.kill(self.pid, 9)  # Bash traps TERM to restore the cursor without exiting
         except ProcessLookupError:
             pass
         os.waitpid(self.pid, 0)
