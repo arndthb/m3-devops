@@ -1,19 +1,30 @@
 #!/usr/bin/env bash
-# m³ v0.1: read-only inventory, no elevated privileges required.
+# m³ system diagnostics — read-only, no elevated privileges.
 set -u
 
-printf 'm³ — Linux DevOps workstation diagnostics\n'
-printf '%s\n' '-----------------------------------------'
+GREEN=$'\033[32m'
+DIM=$'\033[2m'
+BOLD=$'\033[1m'
+RESET=$'\033[0m'
+printf '\033[H\033[2J'
+printf '%s\n' "${GREEN}  ╭──────────────────────────────────────────────╮${RESET}"
+printf '%s\n' "${GREEN}  │${RESET}                                              ${GREEN}│${RESET}"
+printf '%s\n' "${GREEN}  │${RESET}   ${BOLD}${GREEN}m³${RESET}   ${BOLD}DEVOPS WORKSTATION${RESET}                    ${GREEN}│${RESET}"
+printf '%s\n' "${GREEN}  │${RESET}   ${DIM}System diagnostics${RESET}                         ${GREEN}│${RESET}"
+printf '%s\n' "${GREEN}  │${RESET}                                              ${GREEN}│${RESET}"
+printf '%s\n\n' "${GREEN}  ╰──────────────────────────────────────────────╯${RESET}"
 if [[ -r /etc/os-release ]]; then
   . /etc/os-release
-  printf 'Distribution: %s\n' "${PRETTY_NAME:-unknown}"
+  distro="${PRETTY_NAME:-unknown}"
 else
-  printf 'Distribution: unknown (/etc/os-release unavailable)\n'
+  distro='unknown'
 fi
-printf 'Kernel: %s\n' "$(uname -r)"
-printf '\n%-12s %-12s %s\n' 'Tool' 'Status' 'Version'
-printf '%s\n' '------------------------------------------------------------'
-
+printf '%s\n' "${BOLD}  SYSTEM${RESET}"
+printf '  %-15s %s\n' 'Distribution' "$distro"
+printf '  %-15s %s\n\n' 'Kernel' "$(uname -r)"
+printf '%s\n' "${BOLD}  DEVOPS TOOLS${RESET}"
+printf '  %-13s %-14s %s\n' 'TOOL' 'STATUS' 'VERSION'
+printf '  %s\n' '────────────────────────────────────────────────────────────'
 # Version checks use local CLI flags only; kubectl does not contact a cluster.
 get_version() {
   local tool="$1" output
@@ -45,14 +56,17 @@ get_version() {
 }
 
 missing=0
+available=0
 for tool in git podman distrobox kubectl go terraform; do
   if command -v "$tool" >/dev/null 2>&1; then
-    version="$(get_version "$tool")" || version="unknown (version check failed)"
-    printf '%-12s %-12s %s\n' "$tool" 'available' "$version"
+    version="$(get_version "$tool")" || version="version unavailable"
+    printf '  %-13s %b%-14s%b %s\n' "$tool" "$GREEN" '✓ installed' "$RESET" "$version"
+    available=$((available + 1))
   else
-    printf '%-12s %-12s %s\n' "$tool" 'missing' '-'
+    printf '  %-13s %-14s %s\n' "$tool" '○ missing' '—'
     missing=$((missing + 1))
   fi
 done
-printf '\nMissing tools: %d of 6\n' "$missing"
-printf 'Read-only check complete. No changes made.\n'
+printf '\n  %s\n' '────────────────────────────────────────────────────────────'
+printf '  %b%d of 6%b tools installed  ·  %d missing\n' "$GREEN" "$available" "$RESET" "$missing"
+printf '  %bRead-only check · No changes made%b\n' "$DIM" "$RESET"
