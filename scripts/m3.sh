@@ -15,6 +15,8 @@ print_header() {
   printf '\033[32m  │\033[0m                                              \033[32m│\033[0m\n'
   printf '\033[32m  │\033[0m   \033[1;32mm³\033[0m   \033[1mDEVOPS WORKSTATION\033[0m                    \033[32m│\033[0m\n'
   # Bash printf field widths can count UTF-8 bytes; pad by character count instead.
+  # Use ASCII in section labels so padding is stable even with a C locale.
+  section="${section//³/3}"
   local label="${section:0:41}" pad
   pad=$((41 - ${#label}))
   printf '\033[32m  │\033[0m   \033[2m%s\033[0m%*s  \033[32m│\033[0m\n' "$label" "$pad" ''
@@ -231,7 +233,8 @@ update_m3() {
   repo="$(cd -- "$SCRIPT_DIR/.." && pwd)"
   printf '\033[H\033[2J'
   print_header 'Check m³ Updates'
-  printf '\033[1m  ◆ RELEASE CHANNEL\033[0m  main · GitHub\n'
+  printf '\033[1m  ◆ M3 UPDATE CENTER\033[0m\n'
+  printf '  Channel: \033[36mmain\033[0m   Source: GitHub\n'
   printf '  ──────────────────────────────────────────────\n'
   if ! command -v git >/dev/null 2>&1 || [[ ! -d "$repo/.git" ]]; then
     printf '  \033[31m✗ Git checkout unavailable.\033[0m\n'; return 1
@@ -241,7 +244,7 @@ update_m3() {
     printf '  \033[31m✗ Expected main; current: %s\033[0m\n' "${branch:-detached}"; return 1
   fi
   local_rev=$(git -C "$repo" rev-parse --short=7 HEAD 2>/dev/null) || return 1
-  printf '  \033[2m↻ Checking origin/main...\033[0m\n'
+  printf '\n  \033[36m◌ Checking for updates...\033[0m\n'
   if ! git -C "$repo" fetch --quiet origin main; then
     printf '  \033[31m✗ Could not check for updates.\033[0m\n'; return 1
   fi
@@ -253,10 +256,12 @@ update_m3() {
   printf '\n\033[1m  ◆ CHANGELOG\033[0m\n'
   printf '  ──────────────────────────────────────────────\n'
   if [[ "$local_rev" == "$remote_rev" ]]; then
-    printf '  No new commits.\n'
-    printf '  Latest: '
-    git -C "$repo" log -1 --format='%h  %s' HEAD 2>/dev/null
-    printf '\n  \033[1;32m✓ m³ is already up to date.\033[0m\n'
+    printf '  Latest installed commit:\n'
+    git -C "$repo" log -1 --format='    %h  %s' HEAD 2>/dev/null
+    printf '\n  ┌──────────────────────────────────────────┐\n'
+    printf '  │  \033[1;32m✓ ALL UP TO DATE\033[0m                        │\n'
+    printf '  │  No new updates available.               │\n'
+    printf '  └──────────────────────────────────────────┘\n'
     return 0
   fi
   if ! git -C "$repo" merge-base --is-ancestor HEAD FETCH_HEAD; then
@@ -267,7 +272,9 @@ update_m3() {
   printf '  \033[1;32m%s new commit(s)\033[0m · newest first\n\n' "$count"
   git -C "$repo" log -8 --format='  %h  %s' HEAD..FETCH_HEAD 2>/dev/null
   if (( count > 8 )); then printf '  ... and %s more\n' "$((count - 8))"; fi
-  printf '\n  \033[1;33m● UPDATE AVAILABLE\033[0m\n'
+  printf '\n  ┌──────────────────────────────────────────┐\n'
+  printf '  │  \033[1;33m● UPDATE AVAILABLE\033[0m                      │\n'
+  printf '  └──────────────────────────────────────────┘\n'
   printf '  Install this update now? [y/N] '
   IFS= read -r answer || return 1
   if [[ "$answer" != y && "$answer" != Y ]]; then
