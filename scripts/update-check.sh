@@ -45,7 +45,7 @@ if command -v timeout >/dev/null 2>&1; then
     bootc_status=''
     if bootc_status=$(timeout 12s bootc status 2>/dev/null) || bootc_status=$(timeout 12s sudo -n bootc status 2>/dev/null); then
       if [[ "$bootc_status" == *'Staged image:'* ]] || [[ "$bootc_status" == *'staged:'* ]]; then
-        os_update_state='Deployment staged; inspect bootc status'
+        os_update_state='Update staged - reboot pending'
       else
         os_update_state='Deployment readable; availability not checked'
       fi
