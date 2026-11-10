@@ -41,7 +41,7 @@ os_backend='none'
 if command -v timeout >/dev/null 2>&1; then
   if command -v bootc >/dev/null 2>&1; then
     os_backend='bootc'
-    printf '\\n  Reading Bluefin bootc deployment status (no upgrade check)...\\n'
+    printf '\n  Reading Bluefin bootc deployment status (no upgrade check)...\n'
     bootc_status=''
     if bootc_status=$(timeout 12s bootc status 2>/dev/null) || bootc_status=$(timeout 12s sudo -n bootc status 2>/dev/null); then
       if [[ "$bootc_status" == *'Staged image:'* ]] || [[ "$bootc_status" == *'staged:'* ]]; then
