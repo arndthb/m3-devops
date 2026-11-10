@@ -36,6 +36,8 @@ def run_checks():
 
         r = bash('m3_install_command kubectl', env)
         assert r.returncode == 0 and r.stdout == 'brew install --formula kubernetes-cli', r
+        r = bash('m3_install_command kind', env)
+        assert r.returncode == 0 and r.stdout == 'brew install --formula kind', r
         r = bash('m3_install_command terraform', env)
         assert r.returncode == 0 and r.stdout == ('brew tap hashicorp/tap && '
                'brew install --formula hashicorp/tap/terraform'), r
@@ -61,6 +63,13 @@ def run_checks():
         r = bash('m3_install_tool go INSTALL', env)
         assert r.returncode == 0 and log.read_text() == "install --formula go\n", r
         print("PASS: explicit installation API calls only allowlisted mocked Homebrew")
+
+        log.unlink()
+        r = bash('m3_install_tool kind', env)
+        assert r.returncode == 2 and not log.exists(), r
+        r = bash('m3_install_tool kind INSTALL', env)
+        assert r.returncode == 0 and log.read_text() == "install --formula kind\n", r
+        print("PASS: kind requires confirmation and runs only approved Homebrew formula")
 
         log.unlink()
         r = bash('m3_install_tool terraform INSTALL', env)
