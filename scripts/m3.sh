@@ -218,8 +218,10 @@ show_settings_page() {
         if [[ "$key" == n || "$key" == N ]]; then printf 'nerd\n' > "$config"
         else printf 'classic\n' > "$config"; fi ;;
       '') return 0 ;;
-      
-
+      $'\033') return 0 ;;
+    esac
+  done
+}
 
 
 matrix_easter_egg() {
