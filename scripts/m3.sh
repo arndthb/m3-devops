@@ -73,14 +73,15 @@ select_tools() {
     printf '\033[H\033[2J'
     printf 'm³ — Select DevOps tools\n'
     printf '\n'
+    printf '   %-3s %-14s %s\n' '' 'TOOL' 'STATUS'
     for i in "${!tools[@]}"; do
       if (( i == cursor )); then printf ' > '; else printf '   '; fi
       if is_installed "${tools[i]}"; then
-        printf '[-] %s (\033[32minstalled\033[0m)\n' "${tools[i]}"
+        printf '[-] %-14s (\033[32minstalled\033[0m)\n' "${tools[i]}"
       elif [[ "${selected[i]}" == 1 ]]; then
-        printf '[x] %s (missing)\n' "${tools[i]}"
+        printf '[x] %-14s (missing)\n' "${tools[i]}"
       else
-        printf '[ ] %s (missing)\n' "${tools[i]}"
+        printf '[ ] %-14s (missing)\n' "${tools[i]}"
       fi
     done
     printf '\n[-] Installed / locked   [x] Selected   [ ] Available\n'
