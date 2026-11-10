@@ -54,6 +54,14 @@ m3_install_environment() {
 }
 
 m3_install_command() {
+  if [[ "$1" == docker || "$1" == compose ]] && [[ "$(m3_package_manager)" == dnf ]]; then
+    if [[ "$1" == docker ]]; then
+      printf 'Official Docker Fedora repository; DNF install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin; enable docker service'
+    else
+      printf 'Official Docker Fedora repository; DNF install docker-compose-plugin (requires Docker Engine)'
+    fi
+    return 0
+  fi
   if [[ "$1" == nerdfont ]]; then
     printf 'Install JetBrainsMono Nerd Font to ~/.local/share/fonts (curl, unzip, fc-cache)'
     return 0
@@ -80,6 +88,46 @@ m3_install_tool() {
   if [[ "$confirmation" != INSTALL ]]; then
     printf '  No installation performed: exact INSTALL confirmation required.\n'
     return 2
+  fi
+  if [[ "$tool" == docker || "$tool" == compose ]]; then
+    environment="$(m3_install_environment)" || {
+      printf '  %s: installation blocked: %s.\n' "$tool" "$environment"
+      return 2
+    }
+    if [[ "$(m3_package_manager)" != dnf ]]; then
+      printf '  Docker installation is supported only on regular Fedora DNF hosts.\n'
+      return 2
+    fi
+    if [[ "$tool" == compose ]] && ! command -v docker >/dev/null 2>&1; then
+      printf '  Docker Engine must be installed first. Select docker and Compose together.\n'
+      return 2
+    fi
+    if [[ "$tool" == docker ]] && command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+      printf '  Docker already installed and reachable.\n'
+      return 0
+    fi
+    # Official Docker Fedora repository; never execute a downloaded shell script.
+    if [[ ! -f /etc/yum.repos.d/docker-ce.repo ]]; then
+      printf '  Adding official Docker CE Fedora RPM repository...\n'
+      sudo dnf install -y dnf-plugins-core || return 1
+      sudo dnf config-manager addrepo --from-repofile https://download.docker.com/linux/fedora/docker-ce.repo || return 1
+    fi
+    if [[ "$tool" == docker ]]; then
+      printf '  Installing Docker Engine, CLI, Buildx and Compose plugin...\n'
+      sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || return 1
+      printf '  Enabling Docker daemon...\n'
+      sudo systemctl enable --now docker || return 1
+      if ! sudo docker info >/dev/null 2>&1; then
+        printf '  Docker daemon did not pass its health check.\n'
+        return 1
+      fi
+      printf '  Docker daemon ready. Use sudo docker or configure rootless Docker separately.\n'
+      return 0
+    fi
+    printf '  Installing Docker Compose plugin...\n'
+    sudo dnf install -y docker-compose-plugin || return 1
+    docker compose version || return 1
+    return 0
   fi
   if [[ "$tool" == nerdfont ]]; then
     environment="$(m3_install_environment)" || {
