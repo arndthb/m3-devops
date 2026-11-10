@@ -99,7 +99,7 @@ m3_install_tool() {
   }
   if [[ "$(m3_package_manager)" == dnf ]]; then
     printf '  Installing %s with DNF (%s)...\n' "$tool" "$formula"
-    sudo dnf install "$formula" || return 1
+    sudo dnf install -y "$formula" || return 1
     return 0
   fi
   if [[ "$tool" == terraform ]]; then
