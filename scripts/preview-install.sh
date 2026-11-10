@@ -25,13 +25,8 @@ if [[ -r /etc/os-release ]]; then
   . /etc/os-release
   printf '  Platform  %s\n' "${PRETTY_NAME:-Linux}"
 fi
-if command -v brew >/dev/null 2>&1; then
-  brew_available=1
-  printf '  Packages  Homebrew available\n'
-else
-  brew_available=0
-  printf '  Packages  Homebrew not detected\n'
-fi
+manager="$(m3_package_manager)"
+printf '  Packages  %s\n' "$manager"
 printf '\n  %-16s %-12s %s\n' 'TOOL' 'STATUS' 'ACTION'
 printf '  %s\n' '──────────────────────────────────────────────────────'
 for tool in "${tools[@]}"; do
@@ -49,7 +44,7 @@ if (( ${#missing[@]} > 0 )); then
   printf '\n  %sSUGGESTED NEXT STEPS (NOT EXECUTED)%s\n' "$green" "$reset"
   for tool in "${missing[@]}"; do
     printf '  %s\n' "$(m3_tool_label "$tool")"
-    if (( brew_available )) && command="$(m3_install_command "$tool")"; then
+    if command="$(m3_install_command "$tool")"; then
       printf '    %s\n' "$command"
     else
       printf '    %s%s%s\n' "$dim" "$(m3_tool_hint "$tool")" "$reset"
