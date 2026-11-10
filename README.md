@@ -37,7 +37,7 @@ Run `m3` to open the terminal interface. The current menu includes:
 - **Workstation health check:** inspect CPU, memory, disk, network, Podman, Kubernetes, and Git/GitHub CLI, with a summary status.
 - **DevOps Tool Manager:** inspect available development tools.
 - **DevOps Project Manager:** discover local Git and Compose projects, browse with ↑/↓, and open details with Enter.
-- **Update m³:** explicitly confirm a safe `git pull --ff-only origin main`; updates are refused if local changes exist or the checkout is not on `main`. Restart m³ afterward to load the updated menu.
+- **Update m³ / Check Updates:** fetch the latest `origin/main` revision, display the installed and available Git commit IDs (the project does not yet publish separate semantic version numbers), and offer to install an available update with explicit confirmation. Installation is fast-forward only and is refused if local changes exist or branches have diverged. When already current, or after a successful/skipped update, a visible 3–2–1 countdown returns to the main menu. Restart m³ afterward to load changed code.
 - **Settings and information:** view available configuration and project information.
 
 ### DevOps Project Manager
