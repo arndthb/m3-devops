@@ -18,12 +18,16 @@ SCRIPT = ROOT / "scripts" / "m3.sh"
 
 
 class Terminal:
-    def __init__(self, script, rows=24, cols=80):
+    def __init__(self, script, rows=24, cols=80, env=None):
         self.pid, self.fd = pty.fork()
         if self.pid == 0:
             fcntl.ioctl(0, termios.TIOCSWINSZ,
                         struct.pack('HHHH', rows, cols, 0, 0))
-            os.execv("/bin/bash", ["bash", str(script)])
+            args = ["bash", str(script)]
+            if env is None:
+                os.execv("/bin/bash", args)
+            else:
+                os.execve("/bin/bash", args, env)
         self.output = bytearray()
 
     def send(self, data):
@@ -89,6 +93,43 @@ def test_info_return():
         term.close()
 
 
+def test_container_manager():
+    container_script = ROOT / "scripts" / "container-manager.sh"
+    with tempfile.TemporaryDirectory() as d:
+        fake_podman = Path(d) / "podman"
+        fake_podman.write_text("""#!/usr/bin/env bash
+case "$1" in
+  info) printf 'amd64\\n' ;;
+  volume)
+    if [[ "$2" == ls ]]; then
+      printf 'db_data\\n'
+      printf '%064d\\n' 0
+    fi ;;
+  *) printf 'mock output\\n' ;;
+esac
+""")
+        fake_podman.chmod(0o755)
+        env = dict(os.environ)
+        env["PATH"] = d + os.pathsep + env.get("PATH", "")
+        term = Terminal(container_script, rows=40, cols=100, env=env)
+        try:
+            term.expect(b"Container Manager")
+            term.expect(b"CONTAINERS")
+            start = len(term.output)
+            term.send(b"\x1b[B")
+            term.expect(b"\x1b[10;1H", timeout=5, after=start)
+            term.send(b"\x1b[B" + b"\r")
+            term.expect(b"VOLUME NAME", timeout=5)
+            term.expect(b"Auto-generated", timeout=5)
+            term.expect(b"automatically named", timeout=5)
+            at = len(term.output)
+            term.send(b"\r")
+            term.expect(b"Container Manager", timeout=5, after=at)
+            print("PASS: Container Manager incremental navigation / volume labels / return")
+        finally:
+            term.close()
+
+
 def git(cwd, *args):
     subprocess.run(["git", *args], cwd=cwd, check=True,
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -126,5 +167,6 @@ def test_no_update_return():
 
 if __name__ == "__main__":
     test_main_menu_layout()
+    test_container_manager()
     test_info_return()
     test_no_update_return()

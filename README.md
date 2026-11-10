@@ -36,8 +36,9 @@ Run `m3` to open the terminal interface. The current menu includes:
 - **System diagnostics:** inspect the distribution and availability of development tools.
 - **Workstation health check:** inspect CPU, memory, disk, network, Podman, Kubernetes, and Git/GitHub CLI, with a summary status.
 - **DevOps Tool Manager:** inspect available development tools.
+- **Container Manager:** browse Podman containers, images, volumes, networks, and disk usage without making changes. The menu uses the same highlighted selection and adaptive spacing as the main menu. Automatically generated hexadecimal volume IDs are shortened and labeled; use `podman volume inspect <volume-name>` for full metadata.
 - **DevOps Project Manager:** discover local Git and Compose projects, browse with ↑/↓, and open details with Enter.
-- **Update m³ / Check Updates:** fetch the latest `origin/main` revision, display the installed and available Git commit IDs (the project does not yet publish separate semantic version numbers), and offer to install an available update with explicit confirmation. Installation is fast-forward only and is refused if local changes exist or branches have diverged. When already current, or after a successful/skipped update, a visible 3–2–1 countdown returns to the main menu. Restart m³ afterward to load changed code.
+- **Update m³ / Check Updates:** fetch the latest `origin/main` revision, display the installed and available Git commit IDs (the project does not yet publish separate semantic version numbers), and offer to install an available update with explicit confirmation. Installation is fast-forward only and is refused if local changes exist or branches have diverged. When already current, or after a successful/skipped update, a visible 3–2–1 countdown returns to the main menu. The running menu reloads itself after a successful update to use the new code.
 - **Settings and information:** view available configuration and project information.
 
 ### DevOps Project Manager

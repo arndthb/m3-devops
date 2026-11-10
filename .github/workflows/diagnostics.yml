@@ -11,6 +11,7 @@ jobs:
         run: |
           bash -n scripts/check-system.sh
           bash -n scripts/m3.sh
+          bash -n scripts/container-manager.sh
       - name: Smoke-test interactive m3 menu with PTY
         run: python3 tests/test_m3_menu.py
       - name: Run read-only diagnostics
