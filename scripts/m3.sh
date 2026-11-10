@@ -42,6 +42,66 @@ pause_menu() {
   IFS= read -r _ || return 1
 }
 
+m3_launch_tool() {
+  local tool="$1" cmd=""
+  if ! m3_tool_present "$tool"; then
+    printf '  %s is not installed. Select it with Space to install.\n' "$(m3_tool_label "$tool")"
+    return 1
+  fi
+  printf '  %s\n\n' "$(m3_tool_label "$tool")"
+  case "$tool" in
+    codium)
+      if command -v codium >/dev/null 2>&1; then
+        nohup codium >/dev/null 2>&1 </dev/null & disown
+      elif command -v flatpak >/dev/null 2>&1; then
+        nohup flatpak run com.vscodium.codium >/dev/null 2>&1 </dev/null & disown
+      else
+        printf '  VSCodium launcher not found.\n'; return 1
+      fi
+      printf '  VSCodium launch requested.\n' ;;
+    chatgpt)
+      if command -v chatgpt >/dev/null 2>&1; then
+        nohup chatgpt >/dev/null 2>&1 </dev/null & disown
+        printf '  ChatGPT launch requested.\n'
+      elif command -v gtk-launch >/dev/null 2>&1 && [[ -f /usr/share/applications/chatgpt.desktop ]]; then
+        nohup gtk-launch chatgpt >/dev/null 2>&1 </dev/null & disown
+        printf '  ChatGPT launch requested.\n'
+      else
+        printf '  ChatGPT is detected, but no supported launcher was found.\n'; return 1
+      fi ;;
+    hermes)
+      if command -v hermes >/dev/null 2>&1; then hermes
+      elif [[ -x "$HOME/.local/bin/hermes" ]]; then "$HOME/.local/bin/hermes"
+      elif command -v hermes-agent >/dev/null 2>&1; then hermes-agent
+      else printf '  Hermes launcher not found.\n'; return 1; fi ;;
+    codex)
+      if command -v codex >/dev/null 2>&1; then codex
+      elif [[ -x "$HOME/.local/bin/codex" ]]; then "$HOME/.local/bin/codex"
+      else printf '  Codex launcher not found.\n'; return 1; fi ;;
+    git) git --version ;;
+    podman) podman --version ;;
+    distrobox) distrobox --version ;;
+    kubectl) kubectl version --client ;;
+    go) go version ;;
+    terraform)
+      if command -v terraform >/dev/null 2>&1; then terraform version
+      else "$HOME/.local/bin/terraform" version; fi ;;
+    docker) docker --version ;;
+    compose)
+      if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then docker compose version
+      elif command -v docker-compose >/dev/null 2>&1; then docker-compose version
+      elif command -v podman-compose >/dev/null 2>&1; then podman-compose --version
+      else printf '  Compose launcher not found.\n'; return 1; fi ;;
+    kind)
+      if command -v kind >/dev/null 2>&1; then kind version
+      else "$HOME/.local/bin/kind" version; fi ;;
+    make) make --version | head -n 1 ;;
+    curl) curl --version | head -n 1 ;;
+    nerdfont) printf '  A font cannot be launched. Select it in your terminal font preferences.\n' ;;
+    *) printf '  No launch action configured for this tool.\n'; return 1 ;;
+  esac
+}
+
 select_tools() {
   local key next i cursor=0 page_size rows cols page_start row index total
   local name state line checked tool old_cursor old_page_start redraw=1
@@ -106,7 +166,7 @@ select_tools() {
     printf '\033[%d;1H\033[2K  %d–%d / %d entries' "$((rows-3))" \
       "$((page_start+1))" "$((page_start+page_size<total?page_start+page_size:total))" "$total"
     printf '\033[%d;1H\033[2K  [-] Installed · [x] Selected · [ ] Missing' "$((rows-2))"
-    printf '\033[%d;1H\033[2K  ↑/↓ Navigate  Space Select  Enter Open  Esc Back' "$((rows-1))"
+    printf '\033[%d;1H\033[2K  ↑/↓ Navigate  Space Select  Enter Launch/Open  Esc Back' "$((rows-1))"
     redraw=0
     fi
 
@@ -136,7 +196,9 @@ select_tools() {
       '')
         if ((cursor==total-1)); then return; fi
         printf '\033[H\033[2J'
-        if ((cursor==${#tools[@]})); then
+        if ((cursor<${#tools[@]})); then
+          m3_launch_tool "${tools[cursor]}" || true
+        elif ((cursor==${#tools[@]})); then
           preview_selected
         elif ((cursor==${#tools[@]}+1)); then
           bash "$SCRIPT_DIR/preview-install.sh" || printf 'Preview failed.\n'
