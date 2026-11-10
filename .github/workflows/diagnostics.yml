@@ -15,11 +15,12 @@ jobs:
             echo "Checking syntax: $script"
             bash -n "$script"
           done < <(find scripts -type f -name '*.sh' -print0)
-      - name: ShellCheck shared UI and launchers
+      - name: ShellCheck all Bash scripts
         shell: bash
         run: |
           set -euo pipefail
-          shellcheck -s bash -e SC1091 scripts/lib/ui.sh scripts/lib/tool-install.sh scripts/install-launcher.sh
+          mapfile -d '' scripts < <(find scripts -type f -name '*.sh' -print0)
+          shellcheck -s bash -S warning -e SC1091 "${scripts[@]}"
       - name: Smoke-test interactive menus with PTY
         run: python3 tests/test_m3_menu.py
       - name: Test curated tool install policy using mocked Homebrew
