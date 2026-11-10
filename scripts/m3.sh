@@ -76,7 +76,7 @@ select_tools() {
     for i in "${!tools[@]}"; do
       if (( i == cursor )); then printf ' > '; else printf '   '; fi
       if is_installed "${tools[i]}"; then
-        printf '[-] %s (installed)\n' "${tools[i]}"
+        printf '[-] %s (\033[32minstalled\033[0m)\n' "${tools[i]}"
       elif [[ "${selected[i]}" == 1 ]]; then
         printf '[x] %s (missing)\n' "${tools[i]}"
       else
