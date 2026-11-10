@@ -55,7 +55,8 @@ select_tools() {
         printf '[ ] %s\n' "${tools[i]}"
       fi
     done
-    printf '\n↑/↓ Navigate  Space Toggle  Enter Preview  Esc Back\n'\n    IFS= read -rsn1 key || return
+    printf '\n↑/↓ Navigate  Space Toggle  Enter Preview  Esc Back\n'
+    IFS= read -rsn1 key || return
     case "$key" in
       $'\033')
         # Arrow keys send ESC [ A/B; a lone ESC returns to the menu.
