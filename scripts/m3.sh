@@ -10,11 +10,16 @@ fi
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/tool-install.sh
 source "$SCRIPT_DIR/lib/tool-install.sh"
-tools=(git podman distrobox kubectl go terraform)
-selected=(0 0 0 0 0 0)
+# shellcheck source=lib/tool-detect.sh
+source "$SCRIPT_DIR/lib/tool-detect.sh"
+# shellcheck source=lib/ui.sh
+source "$SCRIPT_DIR/lib/ui.sh"
+mapfile -t tools < <(m3_tool_catalog)
+selected=()
+for tool in "${tools[@]}"; do selected+=(0); done
 
 is_installed() {
-  command -v "$1" >/dev/null 2>&1
+  m3_tool_present "$1"
 }
 
 print_header() {
@@ -38,81 +43,86 @@ pause_menu() {
 }
 
 select_tools() {
-  local i choice key cursor=0
+  local key next i cursor=0 page_size rows cols page_start row index total
+  local name state line checked tool
+  local -a actions=('Automatic installation preview' 'Update Check' 'Back to main menu')
+  total=$(( ${#tools[@]} + ${#actions[@]} ))
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'Interactive selection requires a terminal.\n'
     return
   fi
   while true; do
-    # Recheck on every redraw so newly available tools are locked immediately.
-    for i in "${!tools[@]}"; do
-      if is_installed "${tools[i]}"; then selected[i]=0; fi
-    done
-    printf '\033[H\033[2J'
-    print_header 'DevOps Tool Manager'
-    printf '   %-3s %-14s %s\n' '' 'TOOL' 'STATUS'
-    for i in "${!tools[@]}"; do
-      if (( i == cursor )); then printf ' > '; else printf '   '; fi
-      if is_installed "${tools[i]}"; then
-        printf '[-] %-14s (\033[32minstalled\033[0m)\n' "${tools[i]}"
-      elif [[ "${selected[i]}" == 1 ]]; then
-        printf '[x] %-14s (missing)\n' "${tools[i]}"
+    # Pagination keeps every menu action reachable on a 24-row terminal.
+    m3_ui_terminal_size
+    rows="$M3_ROWS"; cols="$M3_COLS"
+    page_size=$((rows-14)); ((page_size>0)) || page_size=1
+    page_start=$((cursor/page_size*page_size))
+
+    m3_ui_header 'DevOps Tool Manager' 'TOOLCHAIN · HOST INVENTORY' "$cols"
+    printf '\033[8;1H\033[2K     SELECT  %-16s  %s\n' 'TOOL' 'STATUS'
+    printf '\033[9;1H\033[2K  ──────────────────────────────────────────\n'
+    for ((i=0;i<page_size;i++)); do
+      index=$((page_start+i))
+      row=$((10+i))
+      printf '\033[%d;1H\033[2K' "$row"
+      ((index<total)) || continue
+      if (( index < ${#tools[@]} )); then
+        tool="${tools[index]}"
+        if is_installed "$tool"; then
+          selected[index]=0
+          checked='[-]'
+          state="\033[32mInstalled\033[0m ($(m3_tool_source "$tool"))"
+        elif [[ "${selected[index]}" == 1 ]]; then
+          checked='[x]'; state="\033[33mSelected\033[0m"
+        else
+          checked='[ ]'; state='Missing'
+        fi
+        name="$(m3_tool_label "$tool")"
+        printf -v line '%s %-16s %b' "$checked" "$name" "$state"
       else
-        printf '[ ] %-14s (missing)\n' "${tools[i]}"
+        checked=' ◆ '
+        name="${actions[index-${#tools[@]}]}"
+        line="$checked $name"
+      fi
+      if ((index==cursor)); then
+        printf '  \033[1;30;42m ▸ \033[0m  \033[1m%b\033[0m\n' "$line"
+      else
+        printf '       %b\n' "$line"
       fi
     done
-    printf '\n'
-    if (( cursor == ${#tools[@]} )); then
-      printf '\033[32m >\033[0m     Automatic installation preview\n'
-    else
-      printf '       Automatic installation preview\n'
-    fi
-    if (( cursor == ${#tools[@]} + 1 )); then
-      printf '\033[32m >\033[0m     Update Check\n'
-    else
-      printf '       Update Check\n'
-    fi
-    if (( cursor == ${#tools[@]} + 2 )); then
-      printf '\033[32m >\033[0m     Back to main menu\n'
-    else
-      printf '       Back to main menu\n'
-    fi
-    printf '\n[-] Installed / locked   [x] Selected   [ ] Available\n'
-    printf '↑/↓ Navigate  Space Toggle  Enter Review / Select\n'
+    printf '\033[%d;1H\033[2K  %d–%d / %d entries\n' "$((rows-3))" \
+      "$((page_start+1))" "$((page_start+page_size<total?page_start+page_size:total))" "$total"
+    printf '\033[%d;1H\033[2K  [-] Installed · [x] Selected · [ ] Missing\n' "$((rows-2))"
+    printf '\033[%d;1H\033[2K  ↑/↓ Navigate  Space Select  Enter Open  Esc Back' "$((rows-1))"
+
     IFS= read -rsn1 key || return
     case "$key" in
       $'\033')
-        # Arrow keys send ESC [ A/B; a lone ESC returns to the menu.
-        if IFS= read -rsn1 -t 0.15 choice; then
-          if [[ "$choice" == '[' ]]; then
-            IFS= read -rsn1 -t 0.15 choice || continue
-            case "$choice" in
-              A) cursor=$(( (cursor + ${#tools[@]}) % (${#tools[@]} + 3) )) ;;
-              B) cursor=$(( (cursor + 1) % (${#tools[@]} + 3) )) ;;
+        if IFS= read -rsn1 -t 0.15 next; then
+          if [[ "$next" == '[' ]]; then
+            IFS= read -rsn1 -t 0.15 next || continue
+            case "$next" in
+              A) cursor=$(( (cursor+total-1) % total )) ;;
+              B) cursor=$(( (cursor+1) % total )) ;;
             esac
           fi
-        else
-          printf '\033[H\033[2J'
-          return
-        fi
-        ;;
+        else return; fi ;;
       ' ')
-        if (( cursor < ${#tools[@]} )) && ! is_installed "${tools[cursor]}"; then
-          selected[cursor]=$((1 - selected[cursor]))
-        fi
-        ;;
+        if ((cursor<${#tools[@]})) && ! is_installed "${tools[cursor]}"; then
+          selected[cursor]=$((1-selected[cursor]))
+        fi ;;
       '')
-        if (( cursor == ${#tools[@]} + 2 )); then return; fi
+        if ((cursor==total-1)); then return; fi
         printf '\033[H\033[2J'
-        if (( cursor == ${#tools[@]} )); then
+        if ((cursor==${#tools[@]})); then
           bash "$SCRIPT_DIR/preview-install.sh" || printf 'Preview failed.\n'
-        elif (( cursor == ${#tools[@]} + 1 )); then
+        elif ((cursor==${#tools[@]}+1)); then
           bash "$SCRIPT_DIR/update-check.sh" || printf 'Update check failed.\n'
         else
           preview_selected
         fi
-        pause_menu || return
-        ;;
+        pause_menu || return ;;
+      q|Q) return ;;
     esac
   done
 }
@@ -130,10 +140,10 @@ show_settings() {
   fi
   print_header 'Info'
   printf '\033[1m  ABOUT m³\033[0m\n'
-  printf '  %-15s %s\n' 'Version' 'v0.1 (development)'
+  printf '  %-15s %s\n' 'Version' 'v0.2 (development)'
   printf '  %-15s %s\n' 'Revision' "$revision"
   printf '  %-15s %s\n' 'Platform' 'Linux · Bluefin first'
-  printf '  %-15s %s\n' 'Mode' 'Read-only / installation simulation'
+  printf '  %-15s %s\n' 'Mode' 'Inspection / confirmed Homebrew installs'
   printf '  %-15s %s\n\n' 'License' 'MIT'
   printf '\033[1m  PROJECT\033[0m\n'
   printf '  %-15s ' 'Repository'
@@ -400,16 +410,16 @@ preview_selected() {
     tool="${tools[i]}"
     count=$((count + 1))
     if is_installed "$tool"; then
-      printf '  %-14s Already installed; skipped\n' "$tool"
+      printf '  %-14s Already installed; skipped\n' "$(m3_tool_label "$tool")"
     elif formula="$(m3_install_command "$tool")"; then
       if m3_install_environment >/dev/null; then
-        printf '  %-14s \033[1;32mREADY\033[0m     %s\n' "$tool" "$formula"
+        printf '  %-14s \033[1;32mREADY\033[0m     %s\n' "$(m3_tool_label "$tool")" "$formula"
         ready+=("$tool")
       else
-        printf '  %-14s \033[1;33mBLOCKED\033[0m   %s\n' "$tool" "$environment"
+        printf '  %-14s \033[1;33mBLOCKED\033[0m   %s\n' "$(m3_tool_label "$tool")" "$environment"
       fi
     else
-      printf '  %-14s \033[1;33mMANUAL\033[0m    Bluefin / OS-managed or unreviewed formula\n' "$tool"
+      printf '  %-14s \033[1;33mMANUAL\033[0m    %s\n' "$(m3_tool_label "$tool")" "$(m3_tool_hint "$tool")"
     fi
   done
 

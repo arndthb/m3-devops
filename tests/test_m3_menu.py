@@ -79,6 +79,27 @@ def test_main_menu_layout():
             term.close()
 
 
+def test_tool_manager_paging():
+    with tempfile.TemporaryDirectory() as d:
+        env = dict(os.environ)
+        env["HOME"] = d
+        term = Terminal(SCRIPT, rows=24, cols=80, env=env)
+        try:
+            term.expect(b"DevOps Workstation Setup")
+            term.send(b"\x1b[B" * 2 + b"\r")
+            term.expect(b"DevOps Tool Manager", timeout=5)
+            term.expect(b"VSCodium", timeout=5)
+            term.expect(b"Hermes", timeout=5)
+            at = len(term.output)
+            # Move to the last group of the 16-item menu, which must page.
+            term.send(b"\x1b[B" * 11)
+            term.expect(b"Automatic installation preview", after=at, timeout=5)
+            term.expect(b"Back to main menu", after=at, timeout=5)
+            print("PASS: expanded tool menu remains navigable on 24-row terminal")
+        finally:
+            term.close()
+
+
 def test_settings_roundtrip():
     # The icon preference is isolated to a temporary HOME.
     with tempfile.TemporaryDirectory() as d:
@@ -111,8 +132,8 @@ def test_tool_manager_readonly():
             term.send(b"\x1b[B" * 2 + b"\r")
             term.expect(b"DevOps Tool Manager", timeout=5)
             at = len(term.output)
-            # Choose Automatic installation preview (index 6).
-            term.send(b"\x1b[B" * 6 + b"\r")
+            # Six original tools plus seven new entries: preview index 13.
+            term.send(b"\x1b[B" * 13 + b"\r")
             term.expect(b"DRY RUN", timeout=5, after=at)
             term.expect(b"No changes made", timeout=5, after=at)
             at = len(term.output)
@@ -402,6 +423,9 @@ def test_no_update_return():
         scripts = repo / "scripts"
         scripts.mkdir(parents=True)
         shutil.copy2(SCRIPT, scripts / "m3.sh")
+        (scripts / "lib").mkdir()
+        for lib in ("tool-install.sh", "tool-detect.sh", "ui.sh"):
+            shutil.copy2(ROOT / "scripts" / "lib" / lib, scripts / "lib" / lib)
         git(base, "init", "-b", "main", str(repo))
         git(repo, "config", "user.email", "ci@example.invalid")
         git(repo, "config", "user.name", "CI Test")
@@ -427,6 +451,7 @@ def test_no_update_return():
 
 if __name__ == "__main__":
     test_main_menu_layout()
+    test_tool_manager_paging()
     test_container_manager()
     test_settings_roundtrip()
     test_tool_manager_readonly()
