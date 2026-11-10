@@ -7,6 +7,7 @@ m3_tool_formula() {
     git) printf 'git' ;;
     go) printf 'go' ;;
     kubectl) printf 'kubernetes-cli' ;;
+    terraform) printf 'hashicorp/tap/terraform' ;;
     *) return 1 ;;
   esac
 }
@@ -30,6 +31,9 @@ m3_install_environment() {
 m3_install_command() {
   local formula
   formula="$(m3_tool_formula "$1")" || return 1
+  if [[ "$1" == terraform ]]; then
+    printf 'brew tap hashicorp/tap && '
+  fi
   printf 'brew install --formula %s' "$formula"
 }
 
@@ -54,6 +58,13 @@ m3_install_tool() {
     printf '  %s: installation blocked: %s.\n' "$tool" "$environment"
     return 2
   }
+  if [[ "$tool" == terraform ]]; then
+    printf '  Adding verified HashiCorp Homebrew tap (hashicorp/tap)...\n'
+    if ! HOMEBREW_NO_AUTO_UPDATE=1 brew tap hashicorp/tap; then
+      printf '  Terraform: failed to add HashiCorp tap; installation not attempted.\n'
+      return 1
+    fi
+  fi
   printf '  Installing %s with Homebrew (%s)...\n' "$tool" "$formula"
   if HOMEBREW_NO_AUTO_UPDATE=1 brew install --formula "$formula"; then
     printf '  %s: Homebrew completed successfully.\n' "$tool"
