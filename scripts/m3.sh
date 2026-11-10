@@ -271,7 +271,7 @@ main_menu() {
           0) bash "$SCRIPT_DIR/check-system.sh" || printf 'Diagnostics failed.\n'; pause_menu || return 0 ;;
           1) bash "$SCRIPT_DIR/health-check.sh" || printf 'Health check failed.\n'; pause_menu || return 0 ;;
           2) select_tools ;;
-          3) bash "$SCRIPT_DIR/project-manager.sh" || printf 'Project scan failed.\n'; pause_menu || return 0 ;;
+          3) bash "$SCRIPT_DIR/project-manager.sh" || printf 'Project scan failed.\n' ;;
           4) show_settings_page; pause_menu || return 0 ;;
           5) show_settings; pause_menu || return 0 ;;
           6) return 0 ;;
