@@ -336,7 +336,7 @@ update_m3() {
 }
 
 main_menu() {
-  local cursor=0 key next secret_count=0
+  local cursor=0 old_cursor key next secret_count=0
   local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Container Manager' 'Update m³' 'Settings' 'Info' 'Exit')
   local -a icons=('[S]' '[H]' '[T]' '[P]' '[C]' '[U]' '[G]' '[i]' '[X]')
   local -a nerd_icons=('󰍹' '󰓅' '󰒓' '󰉋' '󰡨' '󰚰' '󰒓' '󰋼' '󰈆')
@@ -344,18 +344,21 @@ main_menu() {
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
     return 1
   fi
+  render_menu_row() {
+    local index="$1" row=$((8 + index))
+    printf '\033[%d;1H\033[2K' "$row"
+    if (( index == cursor )); then
+      printf '\033[32m >\033[0m  \033[36m%s\033[0m  %s' "${icons[index]}" "${items[index]}"
+    else
+      printf '    \033[2m%s\033[0m  %s' "${icons[index]}" "${items[index]}"
+    fi
+  }
+  printf '\033[H\033[2J'
+  print_header 'DevOps Workstation Setup'
+  if [[ "$(m3_icon_mode)" == nerd ]]; then icons=("${nerd_icons[@]}"); else icons=('[S]' '[H]' '[T]' '[P]' '[C]' '[U]' '[G]' '[i]' '[X]'); fi
+  for i in "${!items[@]}"; do render_menu_row "$i"; printf '\n'; done
+  printf '\n↑/↓ Navigate  Enter Select\n'
   while true; do
-    printf '\033[H\033[2J'
-    print_header 'DevOps Workstation Setup'
-    if [[ "$(m3_icon_mode)" == nerd ]]; then icons=("${nerd_icons[@]}"); else icons=('[S]' '[H]' '[T]' '[P]' '[C]' '[U]' '[G]' '[i]' '[X]'); fi
-    for i in "${!items[@]}"; do
-      if (( i == cursor )); then
-        printf '\033[32m >\033[0m  \033[36m%s\033[0m  %s\n' "${icons[i]}" "${items[i]}"
-      else
-        printf '    \033[2m%s\033[0m  %s\n' "${icons[i]}" "${items[i]}"
-      fi
-    done
-    printf '\n↑/↓ Navigate  Enter Select\n'
     IFS= read -rsn1 key || return 0
     if [[ "$key" == m ]]; then
       secret_count=$((secret_count + 1))
@@ -372,8 +375,8 @@ main_menu() {
           if [[ "$next" == '[' ]]; then
             IFS= read -rsn1 -t 0.15 next || continue
             case "$next" in
-              A) cursor=$(( (cursor + ${#items[@]} - 1) % ${#items[@]} )) ;;
-              B) cursor=$(( (cursor + 1) % ${#items[@]} )) ;;
+              A) old_cursor=$cursor; cursor=$(( (cursor + ${#items[@]} - 1) % ${#items[@]} )); render_menu_row "$old_cursor"; render_menu_row "$cursor" ;;
+              B) old_cursor=$cursor; cursor=$(( (cursor + 1) % ${#items[@]} )); render_menu_row "$old_cursor"; render_menu_row "$cursor" ;;
             esac
           fi
         else
