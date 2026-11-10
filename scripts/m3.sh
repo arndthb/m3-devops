@@ -229,6 +229,7 @@ matrix_easter_egg() {
 }
 
 update_m3() {
+  M3_RESTART_REQUIRED=0
   local repo branch local_rev remote_rev answer status count
   repo="$(cd -- "$SCRIPT_DIR/.." && pwd)"
   printf '\033[H\033[2J'
@@ -296,8 +297,9 @@ update_m3() {
     printf '\n  ┌──────────────────────────────────────────┐\n'
     printf '  │  \033[1;32m✓ UPDATE INSTALLED\033[0m                      │\n'
     printf '  │  New revision: \033[1;32m%-7s\033[0m                   │\n' "$remote_rev"
-    printf '  │  Restart m³ to load the new version.     │\n'
+    printf '  │  Reloading m³ with the new version...    │\n'
     printf '  └──────────────────────────────────────────┘\n'
+    M3_RESTART_REQUIRED=1
   else
     printf '    \033[31m✗\033[0m  [3/3] Installation failed\n'
     printf '    %s\n' "$merge_output"
@@ -354,7 +356,7 @@ main_menu() {
           1) bash "$SCRIPT_DIR/health-check.sh" || printf 'Health check failed.\n'; pause_menu || return 0 ;;
           2) select_tools ;;
           3) bash "$SCRIPT_DIR/project-manager.sh" || printf 'Project scan failed.\n' ;;
-          4) if update_m3; then for seconds in 3 2 1; do printf '\r  Returning to main menu in %s... ' "$seconds"; sleep 1; done; printf '\n'; else pause_menu || return 0; fi ;;
+          4) if update_m3; then for seconds in 3 2 1; do printf '\r  Returning to main menu in %s... ' "$seconds"; sleep 1; done; printf '\n'; if [[ "${M3_RESTART_REQUIRED:-0}" == 1 ]]; then exec bash "$SCRIPT_DIR/m3.sh"; fi; else pause_menu || return 0; fi ;;
           5) show_settings_page; pause_menu || return 0 ;;
           6) show_settings; pause_menu || return 0 ;;
           7) return 0 ;;
