@@ -106,15 +106,20 @@ select_tools() {
     old_page_start=$page_start
     case "$key" in
       "$(printf '\033')")
-        if IFS= read -rsn1 -t 0.15 next; then
-          if [[ "$next" == '[' ]]; then
-            IFS= read -rsn1 -t 0.15 next || continue
-            case "$next" in
-              A) cursor=$(( (cursor+total-1) % total )) ;;
-              B) cursor=$(( (cursor+1) % total )) ;;
-            esac
+        # CSI (ESC [ A/B) and SS3 (ESC O A/B) arrow sequences.
+        # Read the entire sequence before repainting; never echo leftover bytes.
+        if IFS= read -rsn1 -t 0.5 next; then
+          if [[ "$next" == '[' || "$next" == 'O' ]]; then
+            if IFS= read -rsn1 -t 0.5 next; then
+              case "$next" in
+                A) cursor=$(( (cursor+total-1) % total )) ;;
+                B) cursor=$(( (cursor+1) % total )) ;;
+              esac
+            fi
           fi
-        else return; fi ;;
+        else
+          return
+        fi ;;
       ' ')
         if ((cursor<${#tools[@]})) && ! is_installed "${tools[cursor]}"; then
           selected[cursor]=$((1-selected[cursor]))

@@ -6,8 +6,6 @@ m3_tool_catalog() {
 
 m3_tool_label() {
   case "$1" in
-    nerdfont)
-      command -v fc-list >/dev/null 2>&1 && fc-list : family 2>/dev/null | grep -qi "JetBrainsMono Nerd Font" ;;
     codium) printf 'VSCodium' ;;
     compose) printf 'Compose' ;;
     hermes) printf 'Hermes' ;;
@@ -18,6 +16,8 @@ m3_tool_label() {
 
 m3_tool_present() {
   case "$1" in
+    nerdfont)
+      command -v fc-list >/dev/null 2>&1 && fc-list : family 2>/dev/null | grep -qi "JetBrainsMono Nerd Font" ;;
     codium)
       command -v codium >/dev/null 2>&1 && return 0
       if command -v flatpak >/dev/null 2>&1; then
