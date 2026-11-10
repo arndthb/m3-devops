@@ -56,6 +56,7 @@ m3_install_environment() {
 m3_install_command() {
   if [[ "$(m3_package_manager)" == dnf ]]; then
     case "$1" in
+      codex) printf 'Official OpenAI Codex CLI standalone installer (user-local)' ; return 0 ;;
       hermes) printf 'Official Nous Research Hermes Agent installer (user-local; source reviewed before execution)' ; return 0 ;;
       distrobox) printf 'sudo dnf install -y distrobox' ; return 0 ;;
       terraform) printf 'Official HashiCorp release ZIP; verify SHA256; install to ~/.local/bin (no Fedora RPM repo)' ; return 0 ;;
@@ -170,6 +171,48 @@ m3_install_tool() {
         }
         return 0 ;;
     esac
+  fi
+  if [[ "$tool" == codex ]]; then
+    environment="$(m3_install_environment)" || {
+      printf '  Codex: installation blocked: %s.\n' "$environment"
+      return 2
+    }
+    if m3_tool_present codex; then
+      printf '  Codex already installed.\n'
+      return 0
+    fi
+    if ! command -v curl >/dev/null 2>&1; then
+      printf '  Codex requires curl.\n'
+      return 2
+    fi
+    local tmpdir installer
+    tmpdir="$(mktemp -d)" || return 1
+    installer="$tmpdir/codex-install.sh"
+    if ! curl -fLsS --retry 2 --connect-timeout 10 --max-time 120 \
+      'https://chatgpt.com/codex/install.sh' -o "$installer"; then
+      rm -rf -- "$tmpdir"
+      printf '  Codex installer download failed.\n'
+      return 1
+    fi
+    if ! sh -n "$installer"; then
+      rm -rf -- "$tmpdir"
+      printf '  Codex installer syntax validation failed.\n'
+      return 1
+    fi
+    printf '  Running official OpenAI Codex installer as current user.\n'
+    if ! sh "$installer"; then
+      rm -rf -- "$tmpdir"
+      printf '  Codex installation failed.\n'
+      return 1
+    fi
+    rm -rf -- "$tmpdir"
+    export PATH="$HOME/.local/bin:$PATH"
+    if ! m3_tool_present codex; then
+      printf '  Codex installer finished but executable was not detected.\n'
+      return 1
+    fi
+    printf '  Codex installed. Run codex and choose Sign in with ChatGPT.\n'
+    return 0
   fi
   if [[ "$tool" == hermes ]]; then
     environment="$(m3_install_environment)" || {
