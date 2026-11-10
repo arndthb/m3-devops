@@ -456,11 +456,11 @@ main_menu() {
 
 
 preview_selected() {
-  local i tool count=0 answer formula environment failures=0
+  local i tool count=0 formula environment failures=0
   local -a ready=() manual=()
   printf '\n\033[1m  ◆ SELECTED TOOLS — REVIEW\033[0m\n'
   printf '  Only tools explicitly selected with Space are considered.\n'
-  printf '  No changes happen until you type INSTALL.\n\n'
+  printf '  Install selected starts installation for READY tools.\n\n'
 
   environment="$(m3_install_environment)" || true
   for i in "${!tools[@]}"; do
@@ -497,17 +497,9 @@ preview_selected() {
     printf '  No supported installation actions. Nothing changed.\n'
     return 0
   fi
-  printf '\n  Type \033[1mINSTALL\033[0m to install ONLY the READY tools above\n'
-  printf '  using the supported host package manager (Enter cancels): '
-  IFS= read -r answer || answer=''
-  if [[ "$answer" != INSTALL ]]; then
-    printf '\n  Cancelled. No software installed.\n'
-    return 0
-  fi
-
   printf '\n\033[1m  ◆ SELECTED TOOL INSTALLATION\033[0m\n'
   for tool in "${ready[@]}"; do
-    if ! m3_install_tool "$tool" "$answer"; then
+    if ! m3_install_tool "$tool" INSTALL; then
       failures=$((failures + 1))
       printf '  Stopping: remaining tools will not be attempted.\n'
       break
