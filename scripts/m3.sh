@@ -105,7 +105,7 @@ select_tools() {
     old_cursor=$cursor
     old_page_start=$page_start
     case "$key" in
-      "$(printf '\\033')")
+      "$(printf '\033')")
         # CSI (ESC [ A/B) and SS3 (ESC O A/B) arrow sequences.
         # Read the entire sequence before repainting; never echo leftover bytes.
         if IFS= read -rsn1 -t 0.5 next; then
