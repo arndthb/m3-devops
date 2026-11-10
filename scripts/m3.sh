@@ -206,7 +206,7 @@ show_settings_page() {
     else
       printf '  JetBrainsMono Nerd Font: missing.\n'
     fi
-    printf '  Select JetBrainsMono Nerd Font Mono in terminal preferences.\n\n'
+    printf '  Uses compatible Nerd Font icons (BMP / Font Awesome).\n'\n    printf '  Terminal font may still need to be selected in terminal preferences.\n\n'
     printf '  [n] Nerd Font icons (install font if missing)\n'
     printf '  [c] Classic markers   [Enter] Back\n'
     IFS= read -rsn1 key || return 0
@@ -350,7 +350,7 @@ main_menu() {
   local cursor=0 old_cursor key next secret_count=0 row_step=1 term_rows=24 term_cols=80
   local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Container Manager' 'Update m³' 'Settings' 'Info' 'Exit')
   local -a icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
-  local -a nerd_icons=('[ 󰍹 ]' '[ 󰓅 ]' '[ 󰒓 ]' '[ 󰉋 ]' '[ 󰡨 ]' '[ 󰚰 ]' '[ 󰒓 ]' '[ 󰋼 ]' '[ 󰈆 ]')
+  local -a nerd_icons=('[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]')
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
     return 1
