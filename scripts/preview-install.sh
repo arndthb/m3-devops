@@ -26,7 +26,14 @@ for tool in git podman distrobox kubectl go terraform; do
     missing=$((missing + 1))
     printf '[missing]   %s\n' "$tool"
     if (( brew_available )); then
-      printf '            Suggested command (NOT executed): brew install %s\n' "$tool"
+      case "$tool" in
+        terraform)
+          printf '            Suggested (NOT executed): brew tap hashicorp/tap\n'
+          printf '            Suggested (NOT executed): brew install hashicorp/tap/terraform\n' ;;
+        podman|distrobox)
+          printf '            System-integrated tool: check Bluefin image and documentation; no automatic brew suggestion.\n' ;;
+        *) printf '            Suggested command (NOT executed): brew install %s\n' "$tool" ;;
+      esac
     else
       printf '            No command suggested: Homebrew is not installed.\n'
     fi
