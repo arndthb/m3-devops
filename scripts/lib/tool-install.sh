@@ -56,6 +56,7 @@ m3_install_environment() {
 m3_install_command() {
   if [[ "$(m3_package_manager)" == dnf ]]; then
     case "$1" in
+      hermes) printf 'Official Nous Research Hermes Agent installer (user-local; source reviewed before execution)' ; return 0 ;;
       distrobox) printf 'sudo dnf install -y distrobox' ; return 0 ;;
       terraform) printf 'Official HashiCorp release ZIP; verify SHA256; install to ~/.local/bin (no Fedora RPM repo)' ; return 0 ;;
       codium) printf 'flatpak install -y flathub com.vscodium.codium (Flathub remote required)' ; return 0 ;;
@@ -169,6 +170,50 @@ m3_install_tool() {
         }
         return 0 ;;
     esac
+  fi
+  if [[ "$tool" == hermes ]]; then
+    environment="$(m3_install_environment)" || {
+      printf '  Hermes: installation blocked: %s.\n' "$environment"
+      return 2
+    }
+    if m3_tool_present hermes; then
+      printf '  Hermes already installed.\n'
+      return 0
+    fi
+    if ! command -v curl >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1 || ! command -v bash >/dev/null 2>&1; then
+      printf '  Hermes requires curl, git and bash.\n'
+      return 2
+    fi
+    local tmpdir installer
+    tmpdir="$(mktemp -d)" || return 1
+    installer="$tmpdir/hermes-install.sh"
+    # Fetch from the domain listed in Nous Research's official documentation.
+    # Never execute a partial download or use curl | bash.
+    if ! curl -fLsS --retry 2 --connect-timeout 10 --max-time 120 \
+      'https://hermes-agent.nousresearch.com/install.sh' -o "$installer"; then
+      rm -rf -- "$tmpdir"
+      printf '  Hermes installer download failed.\n'
+      return 1
+    fi
+    if ! bash -n "$installer"; then
+      rm -rf -- "$tmpdir"
+      printf '  Hermes installer has invalid Bash syntax.\n'
+      return 1
+    fi
+    printf '  Running official Hermes installer as current user (no sudo).\n'
+    if ! bash "$installer"; then
+      rm -rf -- "$tmpdir"
+      printf '  Hermes installation failed.\n'
+      return 1
+    fi
+    rm -rf -- "$tmpdir"
+    export PATH="$HOME/.local/bin:$PATH"
+    if ! m3_tool_present hermes; then
+      printf '  Hermes installer finished but CLI was not detected. Check ~/.local/bin.\n'
+      return 1
+    fi
+    printf '  Hermes installed. Configure provider using: hermes model\n'
+    return 0
   fi
   if [[ "$tool" == docker || "$tool" == compose ]]; then
     environment="$(m3_install_environment)" || {
