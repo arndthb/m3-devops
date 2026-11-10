@@ -180,145 +180,33 @@ show_settings_page() {
 
 
 matrix_easter_egg() {
-  local width=50 height=13 frame row col char color
-  local glyphs='01m3{}[]/<>'
-  local -a streams=()
-  for ((col=0; col<width; col++)); do streams[col]=$((RANDOM % height)); done
-  # Hide the cursor and restore it even if interrupted.
+  local frame row col char
   printf '\033[?25l'
-  for ((frame=0; frame<36; frame++)); do
-    printf '\033[H\033[2J'
-    printf '\033[1;32m  m³ // THE MATRIX\033[0m\n\n'
-    for ((row=0; row<height; row++)); do
+  for ((frame=0; frame<28; frame++)); do
+    printf '\033[H\033[2J\033[1;32m  m³ // THE MATRIX\033[0m\n\n'
+    for ((row=0; row<12; row++)); do
       printf '  '
-      for ((col=0; col<width; col++)); do
-        if (( (row + frame + streams[col]) % height < 5 )); then
-          char="${glyphs:RANDOM % ${#glyphs}:1}"
-          if (( (row + frame + streams[col]) % height == 4 )); then
-            color=
-  local cursor=0 key next secret_count=0
-  local -a items=('System diagnostics' 'Installation preview' 'Select DevOps tools' 'Settings' 'Info' 'Exit')
-  if [[ ! -t 0 || ! -t 1 ]]; then
-    printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
-    return 1
-  fi
-  while true; do
-    printf '\033[H\033[2J'
-    print_header 'DevOps Workstation Setup'
-    for i in "${!items[@]}"; do
-      if (( i == cursor )); then
-        printf '\033[32m >\033[0m  %s\n' "${items[i]}"
-      else
-        printf '    %s\n' "${items[i]}"
-      fi
-    done
-    printf '\n↑/↓ Navigate  Enter Select\n'
-    IFS= read -rsn1 key || return 0
-    case "$key" in
-      $'\033')
-        if IFS= read -rsn1 -t 0.15 next; then
-          if [[ "$next" == '[' ]]; then
-            IFS= read -rsn1 -t 0.15 next || continue
-            case "$next" in
-              A) cursor=$(( (cursor + ${#items[@]} - 1) % ${#items[@]} )) ;;
-              B) cursor=$(( (cursor + 1) % ${#items[@]} )) ;;
-            esac
-          fi
-        else
-          return 0
-        fi
-        ;;
-      '')
-        printf '\033[H\033[2J'
-        case "$cursor" in
-          0) bash "$SCRIPT_DIR/check-system.sh" || printf 'Diagnostics failed.\n'; pause_menu || return 0 ;;
-          1) bash "$SCRIPT_DIR/preview-install.sh" || printf 'Preview failed.\n'; pause_menu || return 0 ;;
-          2) select_tools ;;
-          3) show_settings_page; pause_menu || return 0 ;;
-          4) show_settings; pause_menu || return 0 ;;
-          5) return 0 ;;
-        esac
-        ;;
-    esac
-  done
-}
-
-main_menu
-printf 'Goodbye from m³.\n'
-\033[1;92m'
-          else
-            color=
-  local cursor=0 key next
-  local -a items=('System diagnostics' 'Installation preview' 'Select DevOps tools' 'Settings' 'Info' 'Exit')
-  if [[ ! -t 0 || ! -t 1 ]]; then
-    printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
-    return 1
-  fi
-  while true; do
-    printf '\033[H\033[2J'
-    print_header 'DevOps Workstation Setup'
-    for i in "${!items[@]}"; do
-      if (( i == cursor )); then
-        printf '\033[32m >\033[0m  %s\n' "${items[i]}"
-      else
-        printf '    %s\n' "${items[i]}"
-      fi
-    done
-    printf '\n↑/↓ Navigate  Enter Select\n'
-    IFS= read -rsn1 key || return 0
-    case "$key" in
-      $'\033')
-        if IFS= read -rsn1 -t 0.15 next; then
-          if [[ "$next" == '[' ]]; then
-            IFS= read -rsn1 -t 0.15 next || continue
-            case "$next" in
-              A) cursor=$(( (cursor + ${#items[@]} - 1) % ${#items[@]} )) ;;
-              B) cursor=$(( (cursor + 1) % ${#items[@]} )) ;;
-            esac
-          fi
-        else
-          return 0
-        fi
-        ;;
-      '')
-        printf '\033[H\033[2J'
-        case "$cursor" in
-          0) bash "$SCRIPT_DIR/check-system.sh" || printf 'Diagnostics failed.\n'; pause_menu || return 0 ;;
-          1) bash "$SCRIPT_DIR/preview-install.sh" || printf 'Preview failed.\n'; pause_menu || return 0 ;;
-          2) select_tools ;;
-          3) show_settings_page; pause_menu || return 0 ;;
-          4) show_settings; pause_menu || return 0 ;;
-          5) return 0 ;;
-        esac
-        ;;
-    esac
-  done
-}
-
-main_menu
-printf 'Goodbye from m³.\n'
-\033[32m'
-          fi
-          printf '%s%s' "$color" "$char"
+      for ((col=0; col<48; col++)); do
+        if (( (row + frame + col * 7) % 13 < 5 )); then
+          char=$((RANDOM % 2))
+          printf '\033[32m%s' "$char"
         else
           printf ' '
         fi
       done
       printf '\033[0m\n'
     done
-    sleep 0.075
+    sleep 0.09
   done
-  printf '\033[H\033[2J'
+  printf '\033[H\033[2J\033[?25h'
   print_header 'Secret mode unlocked'
   printf '\033[1;32m  WAKE UP, DEVOPS.\033[0m\n\n'
-  printf '  There is no cloud.\n'
-  printf "  It's just someone else's computer.\n\n"
+  printf '%s\n' '  There is no cloud.' "  It's just someone else's computer."
   sleep 2
-  printf '\033[?25h'
 }
 
 main_menu() {
-  local cursor=0 key next
+  local cursor=0 key next secret_count=0
   local -a items=('System diagnostics' 'Installation preview' 'Select DevOps tools' 'Settings' 'Info' 'Exit')
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
