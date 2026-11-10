@@ -14,7 +14,7 @@ source "$SCRIPT_DIR/lib/tool-install.sh"
 source "$SCRIPT_DIR/lib/tool-detect.sh"
 # shellcheck source=lib/ui.sh
 source "$SCRIPT_DIR/lib/ui.sh"
-tools=("${m3_catalog[@]}")
+mapfile -t tools < <(m3_tool_catalog)
 selected=()
 for tool in "${tools[@]}"; do selected+=(0); done
 
@@ -44,7 +44,7 @@ pause_menu() {
 
 select_tools() {
   local key next i cursor=0 page_size rows cols page_start row index total
-  local name state info line checked tool
+  local name state line checked tool
   local -a actions=('Automatic installation preview' 'Update Check' 'Back to main menu')
   total=$(( ${#tools[@]} + ${#actions[@]} ))
   if [[ ! -t 0 || ! -t 1 ]]; then
