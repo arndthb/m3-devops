@@ -227,47 +227,62 @@ matrix_easter_egg() {
 }
 
 update_m3() {
-  local repo branch local_rev remote_rev answer status
+  local repo branch local_rev remote_rev answer status count
   repo="$(cd -- "$SCRIPT_DIR/.." && pwd)"
   printf '\033[H\033[2J'
   print_header 'Check m³ Updates'
+  printf '\033[1m  ◆ RELEASE CHANNEL\033[0m  main · GitHub\n'
+  printf '  ──────────────────────────────────────────────\n'
   if ! command -v git >/dev/null 2>&1 || [[ ! -d "$repo/.git" ]]; then
-    printf '  Git checkout unavailable.\n'; return 1
+    printf '  \033[31m✗ Git checkout unavailable.\033[0m\n'; return 1
   fi
   branch=$(git -C "$repo" symbolic-ref --quiet --short HEAD 2>/dev/null) || branch=''
   if [[ "$branch" != main ]]; then
-    printf '  Expected branch main; current: %s\n' "${branch:-detached}"; return 1
+    printf '  \033[31m✗ Expected main; current: %s\033[0m\n' "${branch:-detached}"; return 1
   fi
   local_rev=$(git -C "$repo" rev-parse --short=7 HEAD 2>/dev/null) || return 1
-  printf '  Checking GitHub origin/main...\n'
-  if ! git -C "$repo" fetch origin main; then
-    printf '\n  Could not check for updates.\n'; return 1
+  printf '  \033[2m↻ Checking origin/main...\033[0m\n'
+  if ! git -C "$repo" fetch --quiet origin main; then
+    printf '  \033[31m✗ Could not check for updates.\033[0m\n'; return 1
   fi
   remote_rev=$(git -C "$repo" rev-parse --short=7 FETCH_HEAD 2>/dev/null) || return 1
-  printf '\n  Installed revision: %s\n  Available revision: %s\n' "$local_rev" "$remote_rev"
+  printf '\n\033[1m  ◆ VERSION COMPARISON\033[0m\n'
+  printf '  ──────────────────────────────────────────────\n'
+  printf '  Installed     \033[36m%s\033[0m\n' "$local_rev"
+  printf '  Available     \033[1;32m%s\033[0m\n' "$remote_rev"
+  printf '\n\033[1m  ◆ CHANGELOG\033[0m\n'
+  printf '  ──────────────────────────────────────────────\n'
   if [[ "$local_rev" == "$remote_rev" ]]; then
-    printf '\n  m³ is already up to date.\n'; return 0
+    printf '  No new commits.\n'
+    printf '  Latest: '
+    git -C "$repo" log -1 --format='%h  %s' HEAD 2>/dev/null
+    printf '\n  \033[1;32m✓ m³ is already up to date.\033[0m\n'
+    return 0
   fi
-  if git -C "$repo" merge-base --is-ancestor HEAD FETCH_HEAD; then
-    printf '\n  A newer revision is available.\n'
-  else
-    printf '\n  Branches diverged or local revision is ahead. No automatic update.\n'; return 1
+  if ! git -C "$repo" merge-base --is-ancestor HEAD FETCH_HEAD; then
+    printf '  \033[31m✗ Branches diverged or local revision is ahead.\033[0m\n'
+    printf '  No automatic update.\n'; return 1
   fi
-  printf '  Install the available update now? [y/N] '
+  count=$(git -C "$repo" rev-list --count HEAD..FETCH_HEAD 2>/dev/null) || return 1
+  printf '  \033[1;32m%s new commit(s)\033[0m · newest first\n\n' "$count"
+  git -C "$repo" log -8 --format='  %h  %s' HEAD..FETCH_HEAD 2>/dev/null
+  if (( count > 8 )); then printf '  ... and %s more\n' "$((count - 8))"; fi
+  printf '\n  \033[1;33m● UPDATE AVAILABLE\033[0m\n'
+  printf '  Install this update now? [y/N] '
   IFS= read -r answer || return 1
   if [[ "$answer" != y && "$answer" != Y ]]; then
     printf '  Update skipped.\n'; return 0
   fi
   status=$(git -C "$repo" status --porcelain 2>/dev/null) || { printf '  Could not check local changes.\n'; return 1; }
   if [[ -n "$status" ]]; then
-    printf '  Local changes detected. Update cancelled.\n'; return 1
+    printf '  \033[31m✗ Local changes detected. Update cancelled.\033[0m\n'; return 1
   fi
   printf '\n  Installing update...\n'
   if git -C "$repo" merge --ff-only FETCH_HEAD; then
-    printf '\n  Update finished: %s -> %s\n' "$local_rev" "$remote_rev"
+    printf '\n  \033[1;32m✓ Updated %s → %s\033[0m\n' "$local_rev" "$remote_rev"
     printf '  Restart m³ to load the new version.\n'
   else
-    printf '\n  Update failed; review Git output.\n'; return 1
+    printf '\n  \033[31m✗ Update failed; review Git output.\033[0m\n'; return 1
   fi
 }
 
