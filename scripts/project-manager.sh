@@ -68,17 +68,23 @@ printf '\n  %d project(s) found; %d backup folder(s) hidden.\n' "$count" "$skipp
 printf '  * = changes (including untracked) · ? = status unavailable\n'
 printf '  Scan depth: 2 · No files changed; no containers started.\n'
 
-# Keep the manager open even when no matching projects were found.
-# Otherwise it immediately exits to the main menu without explanation.
-if [[ ${#projects[@]} -eq 0 ]]; then
-  printf '\n  No Git or Compose projects found in the scanned folders.\n'
-  printf '  R Rescan  ·  Esc/Enter Back\n'
+# If nothing was found, explain it instead of immediately returning.
+if (( ${#projects[@]} == 0 )); then
+  printf '\n  No Git or Compose projects found.\n'
+  printf '  R Rescan · Enter/Esc Back\n'
   if [[ -t 0 && -t 1 ]]; then
     while IFS= read -rsn1 key; do
       case "$key" in
-        r|R) exec bash "$SCRIPT_DIR/project-manager.sh" ;;
-        ''|q|Q) break ;;
-        if [[ -t 0 && -t 1 && ${#projects[@]} -gt 0 ]]; then
+        r|R) exec bash "$0" ;;
+        ''|$'\033'|q|Q) break ;;
+      esac
+    done
+  fi
+  exit 0
+fi
+
+# Interactive read-only project selection and details.
+if [[ -t 0 && -t 1 && ${#projects[@]} -gt 0 ]]; then
   cursor=0
   while true; do
     printf '\033[H\033[2J'
@@ -216,7 +222,8 @@ if [[ -t 0 && -t 1 && ${#projects[@]} -gt 0 ]]; then
             $'\033') exit 0 ;;
           esac
         done ;;
-      r|R) exec bash "$0" ;;\n      q|Q) break ;;
+      r|R) exec bash "$0" ;;
+      q|Q) break ;;
     esac
   done
 fi
