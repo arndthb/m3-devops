@@ -79,6 +79,50 @@ def test_main_menu_layout():
             term.close()
 
 
+def test_settings_roundtrip():
+    # The icon preference is isolated to a temporary HOME.
+    with tempfile.TemporaryDirectory() as d:
+        env = dict(os.environ)
+        env["HOME"] = d
+        term = Terminal(SCRIPT, env=env)
+        try:
+            term.expect(b"DevOps Workstation Setup")
+            term.send(b"\x1b[B" * 6 + b"\r")
+            term.expect(b"Icon style: classic", timeout=5)
+            at = len(term.output)
+            term.send(b"n")
+            term.expect(b"Icon style: nerd", timeout=5, after=at)
+            assert (Path(d) / ".config/m3/icon-mode").read_text().strip() == "nerd"
+            at = len(term.output)
+            term.send(b"\r")
+            term.expect(b"DevOps Workstation Setup", timeout=5, after=at)
+            print("PASS: Settings Nerd Font persistence and return")
+        finally:
+            term.close()
+
+
+def test_tool_manager_readonly():
+    with tempfile.TemporaryDirectory() as d:
+        env = dict(os.environ)
+        env["HOME"] = d
+        term = Terminal(SCRIPT, env=env)
+        try:
+            term.expect(b"DevOps Workstation Setup")
+            term.send(b"\x1b[B" * 2 + b"\r")
+            term.expect(b"DevOps Tool Manager", timeout=5)
+            at = len(term.output)
+            # Choose Automatic installation preview (index 6).
+            term.send(b"\x1b[B" * 6 + b"\r")
+            term.expect(b"DRY RUN", timeout=5, after=at)
+            term.expect(b"No changes made", timeout=5, after=at)
+            at = len(term.output)
+            term.send(b"\r")
+            term.expect(b"DevOps Tool Manager", timeout=5, after=at)
+            print("PASS: Tool Manager overview, DRY RUN and return")
+        finally:
+            term.close()
+
+
 def test_info_return():
     term = Terminal(SCRIPT)
     try:
@@ -252,6 +296,8 @@ def test_no_update_return():
 if __name__ == "__main__":
     test_main_menu_layout()
     test_container_manager()
+    test_settings_roundtrip()
+    test_tool_manager_readonly()
     test_project_manager()
     test_info_return()
     test_no_update_return()

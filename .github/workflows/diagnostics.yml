@@ -7,14 +7,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate shell syntax
+      - name: Validate all Bash scripts
+        shell: bash
         run: |
-          bash -n scripts/check-system.sh
-          bash -n scripts/m3.sh
-          bash -n scripts/container-manager.sh
-          bash -n scripts/project-manager.sh
-          bash -n scripts/lib/ui.sh
-      - name: Smoke-test interactive m3 menu with PTY
+          set -euo pipefail
+          while IFS= read -r -d '' script; do
+            echo "Checking syntax: $script"
+            bash -n "$script"
+          done < <(find scripts -type f -name '*.sh' -print0)
+      - name: ShellCheck shared UI and launchers
+        shell: bash
+        run: |
+          set -euo pipefail
+          shellcheck -s bash -e SC1091 scripts/lib/ui.sh scripts/install-launcher.sh
+      - name: Smoke-test interactive menus with PTY
         run: python3 tests/test_m3_menu.py
       - name: Run read-only diagnostics
         run: bash scripts/check-system.sh
