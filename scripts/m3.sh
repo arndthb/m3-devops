@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# m³ interactive menu — diagnostics read-only; select Homebrew installs require confirmation.
+# m³ interactive menu — diagnostics read-only; selected package installs require confirmation.
 set -u
 
 # Keep the terminal cursor out of the interactive menu.
@@ -45,7 +45,7 @@ pause_menu() {
 select_tools() {
   local key next i cursor=0 page_size rows cols page_start row index total
   local name state line checked tool
-  local -a actions=('Automatic installation preview' 'Update Check' 'Workstation readiness' 'Docker & Compose' 'Back to main menu')
+  local -a actions=('Install selected' 'Automatic installation preview' 'Update Check' 'Workstation readiness' 'Docker & Compose' 'Back to main menu')
   total=$(( ${#tools[@]} + ${#actions[@]} ))
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'Interactive selection requires a terminal.\n'
@@ -115,15 +115,17 @@ select_tools() {
         if ((cursor==total-1)); then return; fi
         printf '\033[H\033[2J'
         if ((cursor==${#tools[@]})); then
-          bash "$SCRIPT_DIR/preview-install.sh" || printf 'Preview failed.\n'
+          preview_selected
         elif ((cursor==${#tools[@]}+1)); then
-          bash "$SCRIPT_DIR/update-check.sh" || printf 'Update check failed.\n'
+          bash "$SCRIPT_DIR/preview-install.sh" || printf 'Preview failed.\n'
         elif ((cursor==${#tools[@]}+2)); then
-          bash "$SCRIPT_DIR/setup-check.sh" || printf 'Readiness check failed.\n'
+          bash "$SCRIPT_DIR/update-check.sh" || printf 'Update check failed.\n'
         elif ((cursor==${#tools[@]}+3)); then
+          bash "$SCRIPT_DIR/setup-check.sh" || printf 'Readiness check failed.\n'
+        elif ((cursor==${#tools[@]}+4)); then
           bash "$SCRIPT_DIR/docker-check.sh" || printf 'Docker check failed.\n'
         else
-          preview_selected
+          return
         fi
         pause_menu || return ;;
       q|Q) return ;;
@@ -146,8 +148,8 @@ show_settings() {
   printf '\033[1m  ABOUT m³\033[0m\n'
   printf '  %-15s %s\n' 'Version' 'v0.2 (development)'
   printf '  %-15s %s\n' 'Revision' "$revision"
-  printf '  %-15s %s\n' 'Platform' 'Linux · Bluefin first'
-  printf '  %-15s %s\n' 'Mode' 'Inspection / confirmed Homebrew installs'
+  printf '  %-15s %s\n' 'Platform' 'Linux · Fedora / Bluefin'
+  printf '  %-15s %s\n' 'Mode' 'Inspection / confirmed package installs'
   printf '  %-15s %s\n\n' 'License' 'MIT'
   printf '\033[1m  PROJECT\033[0m\n'
   printf '  %-15s ' 'Repository'
@@ -316,7 +318,7 @@ main_menu() {
       printf '\033[1;32m  ███╗   ███╗³\033[0m   \033[1;37mDEVOPS\033[0m\n'
       printf '\033[1;32m  ████╗ ████║ \033[0m   \033[1;37mWORKSTATION\033[0m\n'
       printf '\033[1;32m  ██╔████╔██║ \033[0m   \033[2mBUILD · RUN · SHIP\033[0m\n'
-      printf '\033[1;32m  ██║╚██╔╝██║ \033[0m   \033[2mLinux / Bluefin\033[0m\n'
+      printf '\033[1;32m  ██║╚██╔╝██║ \033[0m   \033[2mLinux / Fedora\033[0m\n'
       printf '\033[1;32m  ╚═╝ ╚═╝ ╚═╝ \033[0m   \033[36mDevOps Workstation Setup\033[0m\n'
       printf '\033[32m  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n\n'
     else
@@ -432,11 +434,11 @@ preview_selected() {
     printf '  Nothing selected. Use Space on a missing tool first.\n'
     return 0
   fi
-  printf '\n  %d selected · %d approved for Homebrew installation\n' "$count" "${#ready[@]}"
+  printf '\n  %d selected · %d approved for installation\n' "$count" "${#ready[@]}"
   if (( ${#ready[@]} == 0 )); then
     if [[ " ${manual[*]} " == *" docker "* ]]; then
-      printf '  Docker is managed by the Bluefin image, not installed as a Homebrew formula.\n'
-      printf '  Opening the Bluefin-specific Docker & Compose guide...\n\n'
+      printf '  Docker needs an OS-specific installation procedure.\n'
+      printf '  Opening Docker & Compose guidance...\n\n'
       bash "$SCRIPT_DIR/docker-check.sh" || printf '  Docker guide could not be opened.\n'
       return 0
     fi
@@ -444,14 +446,14 @@ preview_selected() {
     return 0
   fi
   printf '\n  Type \033[1mINSTALL\033[0m to install ONLY the READY tools above\n'
-  printf '  using Homebrew (or press Enter to cancel): '
+  printf '  using the supported host package manager (Enter cancels): '
   IFS= read -r answer || answer=''
   if [[ "$answer" != INSTALL ]]; then
     printf '\n  Cancelled. No software installed.\n'
     return 0
   fi
 
-  printf '\n\033[1m  ◆ HOMEBREW INSTALLATION\033[0m\n'
+  printf '\n\033[1m  ◆ SELECTED TOOL INSTALLATION\033[0m\n'
   for tool in "${ready[@]}"; do
     if ! m3_install_tool "$tool" "$answer"; then
       failures=$((failures + 1))
