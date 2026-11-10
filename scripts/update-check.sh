@@ -78,6 +78,9 @@ for tool in git podman distrobox kubectl go terraform; do
     resolved=$(readlink -f "$executable" 2>/dev/null) || resolved="$executable"
     if command -v rpm >/dev/null 2>&1; then
       package=$(rpm -qf --qf '%{NAME}' "$resolved" 2>/dev/null) || package=''
+      if [[ -z "$package" && "$resolved" != "$executable" ]]; then
+        package=$(rpm -qf --qf '%{NAME}' "$executable" 2>/dev/null) || package=''
+      fi
       if [[ -n "$package" ]]; then
         source='RPM / Bluefin'
         update='OS update channel'
@@ -86,6 +89,14 @@ for tool in git podman distrobox kubectl go terraform; do
           update='OS channel: see below'
         fi
       fi
+    fi
+    if [[ "$source" == Unmanaged ]]; then
+      case "$executable:$resolved" in
+        *'/home/linuxbrew/.linuxbrew/'*|*'/.linuxbrew/'*)
+          source='Homebrew'; update='Check brew formula';;
+        *'/run/host/'*|*'/usr/bin/'*|*'/usr/sbin/'*)
+          source='System path'; update='OS package unverified';;
+      esac
     fi
     if [[ "$source" == Unmanaged ]]; then
       case "$resolved" in
@@ -100,6 +111,8 @@ for tool in git podman distrobox kubectl go terraform; do
     printf '  %-12s %-12s %-13s %s\n' "$tool" "$version" "$source" "$update"
   fi
 done
+printf '\n  Note: System path does not confirm RPM ownership.\n'
+printf '  For unresolved tools, inspect: command -v TOOL; rpm -qf PATH\n'
 printf '\n  BLUEFIN OS UPDATE CHANNEL: %s\n' "$os_update_state"
 if [[ "$os_update_state" == 'Check completed; inspect output' || "$os_update_state" == 'Check failed or timed out' ]]; then
   printf '  %s\n' "$os_update_detail" | head -n 8
