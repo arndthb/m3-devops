@@ -345,7 +345,8 @@ main_menu() {
     return 1
   fi
   render_menu_row() {
-    local index="$1" row=$((8 + index))
+    local index="$1"
+    local row=$((8 + index))
     printf '\033[%d;1H\033[2K' "$row"
     if (( index == cursor )); then
       printf '\033[32m >\033[0m  \033[36m%s\033[0m  %s' "${icons[index]}" "${items[index]}"
