@@ -33,7 +33,9 @@ print_header() {
 pause_menu() {
   printf '\nPress Enter to return to the menu...'
   IFS= read -r _ || return 1
-}select_tools() {
+}
+
+select_tools() {
   local i choice key cursor=0
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'Interactive selection requires a terminal.\n'
