@@ -110,7 +110,7 @@ if [[ -t 0 && -t 1 && ${#projects[@]} -gt 0 ]]; then
         done
         printf '%s\n\n  Top-level entries (first 15):\n' "$found"
         find "$dir" -mindepth 1 -maxdepth 1 -printf '    %f\n' 2>/dev/null | sort | head -n 15
-        printf '\n  Read-only. Press Enter to return...'
+        printf '\n  Controls: Enter = project list · Esc = main menu\n'\n        printf '  Read-only. Press Enter to return...'
         IFS= read -r _ || break ;;
       q|Q) break ;;
     esac
