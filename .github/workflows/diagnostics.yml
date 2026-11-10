@@ -27,5 +27,7 @@ jobs:
         run: python3 tests/test_tool_install.py
       - name: Test expanded tool detection using fake commands
         run: python3 tests/test_tool_detect.py
+      - name: Mocked provider readiness checks
+        run: python3 tests/test_readiness.py
       - name: Run read-only diagnostics
         run: bash scripts/check-system.sh
