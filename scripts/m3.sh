@@ -85,9 +85,9 @@ select_tools() {
       fi
     done
     if (( cursor == ${#tools[@]} )); then
-      printf '\033[32m >\033[0m     Back to main menu\n'
+      printf '\033[32m >\033[0m     Back\n'
     else
-      printf '       Back to main menu\n'
+      printf '       Back\n'
     fi
     printf '\n[-] Installed / locked   [x] Selected   [ ] Available\n'
     printf '↑/↓ Navigate  Space Toggle  Enter Select\n'
@@ -99,7 +99,7 @@ select_tools() {
           if [[ "$choice" == '[' ]]; then
             IFS= read -rsn1 -t 0.15 choice || continue
             case "$choice" in
-              A) cursor=$(( (cursor + ${#tools[@]} - 1) % (${#tools[@]} + 1) )) ;;
+              A) cursor=$(( (cursor + ${#tools[@]}) % (${#tools[@]} + 1) )) ;;
               B) cursor=$(( (cursor + 1) % (${#tools[@]} + 1) )) ;;
             esac
           fi
