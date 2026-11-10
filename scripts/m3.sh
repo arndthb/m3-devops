@@ -33,55 +33,14 @@ print_header() {
 pause_menu() {
   local key
   printf '\nPress Enter to return to the menu...'
-  # Accept both LF and CR; terminal emulators differ in their Enter key mapping.
+  # Accept the Enter key in terminals that send either LF or CR.
   while IFS= read -rsn1 key; do
-    [[ "$key" == 
-
-preview_selected() {
-  local i tool count=0 missing=0 answer
-  local -a pending=()
-  printf '\nm³ — Selected tools installation preview (DRY RUN)\n'
-  printf 'No software will be installed.\n'
-  for i in "${!tools[@]}"; do
-    [[ "${selected[i]}" == 1 ]] || continue
-    count=$((count + 1))
-    tool="${tools[i]}"
-    if is_installed "$tool"; then
-      printf '[installed] %s — no action needed\n' "$tool"
-    else
-      missing=$((missing + 1))
-      pending+=("$tool")
-      printf '[missing]   %s\n' "$tool"
-      if ! command -v brew >/dev/null 2>&1; then
-        printf '            Homebrew not detected; installation method needs review.\n'
-      elif [[ "$tool" == terraform ]]; then
-        printf '            Suggested (NOT executed): brew tap hashicorp/tap\n'
-        printf '            Suggested (NOT executed): brew install hashicorp/tap/terraform\n'
-      elif [[ "$tool" == podman || "$tool" == distrobox ]]; then
-        printf '            System-integrated tool: check Bluefin image; no brew suggestion.\n'
-      else
-        printf '            Suggested (NOT executed): brew install %s\n' "$tool"
-      fi
+    if [[ "$key" == $'\n' || "$key" == $'\r' ]]; then
+      break
     fi
   done
-  if (( count == 0 )); then
-    printf 'No tools selected.\n'
-  elif (( missing == 0 )); then
-    printf 'All selected tools are already installed.\n'
-  else
-    printf '\nConfirmation flow test: %d missing tool(s): %s\n' "$missing" "${pending[*]}"
-    printf 'Type INSTALL to confirm this plan, or press Enter to cancel: '
-    IFS= read -r answer || answer=''
-    if [[ "$answer" == INSTALL ]]; then
-      printf 'Confirmation accepted (simulation only).\n'
-      printf 'Installation execution is not enabled in this version.\n'
-    else
-      printf 'Cancelled.\n'
-    fi
-  fi
-  printf 'Preview complete. No changes made.\n'
+  printf '\n'
 }
-
 select_tools() {
   local i choice key cursor=0
   if [[ ! -t 0 || ! -t 1 ]]; then
