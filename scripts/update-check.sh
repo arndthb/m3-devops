@@ -110,7 +110,7 @@ for tool in git podman distrobox kubectl go terraform; do
         *'/home/linuxbrew/.linuxbrew/'*|*'/.linuxbrew/'*)
           source='Homebrew'; update='Check brew formula';;
         *'/run/host/'*|*'/usr/bin/'*|*'/usr/sbin/'*)
-          source='System path'; update='OS package unverified';;
+          source='System path'; update='See Bluefin status';;
       esac
     fi
     if [[ "$source" == Unmanaged ]]; then
@@ -128,8 +128,8 @@ for tool in git podman distrobox kubectl go terraform; do
     printf '  %-12s %-12s %-13s %s\n' "$tool" "$version" "$source" "$update"
   fi
 done
-printf '\n  Note: System path does not confirm RPM ownership.\n'
-printf '  System-path tools may be part of the Bluefin image.\n'
+printf '\n  System path: installed in an OS directory; package ownership unknown.\n'
+printf '  Bluefin status describes the OS image, not individual tool updates.\n'
 printf '\n  BLUEFIN OS UPDATE CHANNEL (%s): %s\n' "$os_backend" "$os_update_state"
 if [[ "$os_update_state" == 'Check completed; inspect output' || "$os_update_state" == 'Check failed or timed out' ]]; then
   printf '  %s\n' "$os_update_detail" | head -n 8
