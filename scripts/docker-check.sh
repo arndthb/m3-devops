@@ -58,25 +58,54 @@ elif command -v docker-compose >/dev/null 2>&1; then
   docker_compose=1
   m3_docker_status OK 'Docker Compose' 'Standalone docker-compose command'
 else
-  m3_docker_status WARN 'Docker Compose' 'No Docker Compose plugin/standalone CLI'
+  m3_docker_status INFO 'Docker Compose' 'No Docker CLI plugin/standalone CLI'
 fi
+
+podman_ready=0
+podman_compose=0
 if command -v podman >/dev/null 2>&1; then
   if m3_docker_probe podman info --format '{{.Host.Arch}}'; then
-    m3_docker_status OK 'Podman engine' 'Reachable (does not imply Docker)'
+    podman_ready=1
+    m3_docker_status OK 'Podman engine' 'Reachable'
+    rootless="$(podman info --format '{{.Host.Security.Rootless}}' 2>/dev/null)" || rootless='unknown'
+    if [[ "$rootless" == true ]]; then
+      m3_docker_status OK 'Podman mode' 'Rootless (no root daemon)'
+    else
+      m3_docker_status INFO 'Podman mode' "$rootless"
+    fi
   else
     m3_docker_status INFO 'Podman engine' 'CLI present, engine not reachable'
   fi
+  if m3_docker_probe podman compose version; then
+    podman_compose=1
+    provider="$(podman compose version 2>/dev/null | tail -n 1)"
+    provider="$(m3_ui_clean_text "$provider")"
+    m3_docker_status OK 'Compose via Podman' "$provider"
+  else
+    m3_docker_status INFO 'Compose via Podman' 'No working external Compose provider'
+  fi
+  if command -v systemctl >/dev/null 2>&1; then
+    if systemctl --user is-active --quiet podman.socket 2>/dev/null; then
+      m3_docker_status OK 'Podman API' 'User socket active'
+    else
+      m3_docker_status INFO 'Podman API' 'Socket inactive; CLI/Compose can work without persistent API socket'
+    fi
+  fi
 else
   m3_docker_status INFO 'Podman engine' 'Not detected'
-fi
-if command -v podman-compose >/dev/null 2>&1; then
-  m3_docker_status INFO 'Podman Compose' 'Available; separate from Docker Compose'
 fi
 
 printf '\n\033[1m  ◆ BLUEFIN SETUP GUIDANCE\033[0m\n'
 if (( docker_ready && docker_compose )); then
   printf '  Docker Engine and Compose are available for DevOps projects.\n'
   printf '  Verify your project manually with: docker compose config\n'
+elif (( podman_ready && podman_compose )); then
+  printf '  Recommended: keep rootless Podman + its Compose provider.\n'
+  printf '  Docker Engine is optional unless a project requires the real daemon.\n'
+  printf '  Run Compose projects with: podman compose up -d\n'
+  printf '  Check configuration first with: podman compose config\n'
+  printf '  An inactive podman.socket is normal for CLI-only workflows.\n'
+  printf '  Enable the user socket only if a tool needs the Docker-compatible API.\n'
 elif (( docker_ready )); then
   printf '  Docker Engine is reachable; Docker Compose is still missing.\n'
   printf '  Use the Bluefin DX-supported Compose integration; do not layer\n'
