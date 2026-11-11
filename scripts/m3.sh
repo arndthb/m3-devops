@@ -445,7 +445,7 @@ main_menu() {
   }
   render_menu_row() {
     local index="$1"
-    local row=$((8 + index * row_step))
+    local row=$((8 + index * row_step + (index > 5 ? 1 : 0)))
     printf '\033[%d;1H\033[2K' "$row"
     if (( index == cursor )); then
       printf '  \033[1;30;42m ▸ \033[0m \033[1;32m%s\033[0m  \033[1;37m%s\033[0m' "${icons[index]}" "${items[index]}"
@@ -455,11 +455,11 @@ main_menu() {
   }
   render_app_choice() {
     local row=$((8 + 5 * row_step + 1))
-    printf '\\033[%d;1H\\033[2K' "$row"
+    printf '\033[%d;1H\033[2K' "$row"
     if (( cursor == 5 )); then
-      printf '       \\033[1;32m◀  %s  ▶\\033[0m' "${app_names[app_index]}"
+      printf '       \033[1;32m◀  %s  ▶\033[0m' "${app_names[app_index]}"
     else
-      printf '       \\033[2m◀  %s  ▶\\033[0m' "${app_names[app_index]}"
+      printf '       \033[2m◀  %s  ▶\033[0m' "${app_names[app_index]}"
     fi
   }
   render_main_menu() {
@@ -467,7 +467,7 @@ main_menu() {
     (( term_rows > 0 )) || term_rows=24
     (( term_cols > 0 )) || term_cols=80
     row_step=1
-    if (( term_rows >= 30 && term_cols >= 65 )); then row_step=2; fi
+    if (( term_rows >= 32 && term_cols >= 65 )); then row_step=2; fi
     printf '\033[?25l\033[H\033[2J'
     print_main_banner
     if [[ "$(m3_icon_mode)" == nerd ]]; then
@@ -479,7 +479,7 @@ main_menu() {
       render_menu_row "$i"
     done
     render_app_choice
-    printf '\033[%d;1H\033[2K\033[2m  ↑/↓ Menu  ←/→ Applications  Enter Launch/Open  Esc Exit\033[0m' "$((8 + ${#items[@]} * row_step + 1))"
+    printf '\033[%d;1H\033[2K\033[2m  ↑/↓ Menu  ←/→ Applications  Enter Launch/Open  Esc Exit\033[0m' "$((8 + ${#items[@]} * row_step + 2))"
   }
   render_main_menu
   while true; do
@@ -500,7 +500,7 @@ main_menu() {
           if [[ "$next" == '[' ]]; then
             IFS= read -rsn1 -t 0.15 next || continue
             case "$next" in
-              A) old_cursor=$cursor; cursor=$(( (cursor + ${#items[@]} - 1) % ${#items[@]} )); render_menu_row "$old_cursor"; render_menu_row "$cursor" ;;
+              A) old_cursor=$cursor; cursor=$(( (cursor + ${#items[@]} - 1) % ${#items[@]} )); render_menu_row "$old_cursor"; render_menu_row "$cursor"; render_app_choice ;;
               B) old_cursor=$cursor; cursor=$(( (cursor + 1) % ${#items[@]} )); render_menu_row "$old_cursor"; render_menu_row "$cursor" ;;
               C) if (( cursor == 5 )); then app_index=$(( (app_index+1) % ${#app_names[@]} )); render_app_choice; fi ;;
               D) if (( cursor == 5 )); then app_index=$(( (app_index+${#app_names[@]}-1) % ${#app_names[@]} )); render_app_choice; fi ;;
