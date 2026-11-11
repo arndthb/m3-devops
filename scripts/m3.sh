@@ -420,8 +420,8 @@ update_m3() {
 main_menu() {
   local cursor=0 old_cursor key next secret_count=0 row_step=1 term_rows=24 term_cols=80
   local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Container Manager' 'Hermes Agent' 'Codex CLI' 'VSCodium' 'ChatGPT Desktop' 'Update m³' 'Settings' 'Info' 'Exit')
-  local -a icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ A ]' '[ O ]' '[ V ]' '[ G ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
-  local -a nerd_icons=('[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]')
+  local -a icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ A ]' '[ O ]' '[ V ]' '[ C ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
+  local -a nerd_icons=('[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]')
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
     return 1
