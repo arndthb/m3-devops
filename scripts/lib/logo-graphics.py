@@ -1,30 +1,45 @@
 #!/usr/bin/env python3
-"""Render a tiny raised 3 using the Kitty terminal graphics protocol.
+"""Render the complete m³ logo as a transparent PNG via Kitty graphics.
 
-No external Python packages. Only called for known Kitty-capable terminals.
+Pure Python standard library. Image dimensions track terminal cell dimensions.
 """
 import base64
+import os
 import struct
 import sys
 import zlib
 
-PATTERN = ("11111", "00001", "00001", "01111", "00001", "00001", "11111")
-SCALE = 3
-WIDTH, HEIGHT = 5 * SCALE, 7 * SCALE
-COLOR = (104, 255, 158, 255)
-pixels = bytearray()
-for y in range(HEIGHT):
-    pixels.append(0)
-    for x in range(WIDTH):
-        active = PATTERN[y // SCALE][x // SCALE] == "1"
-        pixels.extend(COLOR if active else (0, 0, 0, 0))
+# Five-row lettermark from the existing terminal banner, redrawn in pixels.
+M = (
+    "11000000011",
+    "11100000111",
+    "11010010111",
+    "11001100111",
+    "11000000011",
+)
+THREE = ("111", "001", "111", "001", "111")
+SCALE = 7
+W, H = 17 * SCALE, 9 * SCALE
+ON = (105, 255, 161, 255)
+OFF = (0, 0, 0, 0)
+rgba = bytearray()
+for y in range(H):
+    rgba.append(0)  # PNG filter type: None
+    for x in range(W):
+        gx, gy = x // SCALE, y // SCALE
+        m = 0 <= gy < 9 and 0 <= gx < 11 and M[min(4, gy * 5 // 9)][gx] == "1"
+        three = 12 <= gx < 15 and 0 <= gy < 5 and THREE[gy][gx - 12] == "1"
+        rgba.extend(ON if (m or three) else OFF)
 
-def chunk(kind, data):
-    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xffffffff)
+def chunk(tag, data):
+    return (struct.pack(">I", len(data)) + tag + data +
+            struct.pack(">I", zlib.crc32(tag + data) & 0xffffffff))
 
 png = (b"\x89PNG\r\n\x1a\n" +
-       chunk(b"IHDR", struct.pack(">IIBBBBB", WIDTH, HEIGHT, 8, 6, 0, 0, 0)) +
-       chunk(b"IDAT", zlib.compress(bytes(pixels))) +
-       chunk(b"IEND", b""))
+       chunk(b"IHDR", struct.pack(">IIBBBBB", W, H, 8, 6, 0, 0, 0)) +
+       chunk(b"IDAT", zlib.compress(rgba)) + chunk(b"IEND", b""))
 payload = base64.b64encode(png).decode("ascii")
-sys.stdout.write("\x1b7\x1b[1;17H\x1b_Gf=100,a=T,c=3,r=2,q=2;" + payload + "\x1b\\\x1b8")
+# Display image over the left side of the existing header; retain text fallback
+# in non-Kitty terminals. Use a unique image id and replace it on redraw.
+sys.stdout.write("\x1b7\x1b[1;3H\x1b_Ga=T,f=100,i=733,c=15,r=5,q=2;" +
+                 payload + "\x1b\\\x1b8")
