@@ -3,8 +3,12 @@
 
 # Only emit Kitty graphics in terminals known to implement the protocol.
 # Other terminals retain the Unicode superscript ³ (no raw escape garbage).
+m3_ui_kitty_supported() {
+  [[ -n "${KITTY_WINDOW_ID:-}${WEZTERM_PANE:-}${GHOSTTY_RESOURCES_DIR:-}" || "${TERM:-}" == xterm-kitty ]] && command -v python3 >/dev/null 2>&1
+}
+
 m3_ui_graphic_three() {
-  [[ -n "${KITTY_WINDOW_ID:-}${WEZTERM_PANE:-}${GHOSTTY_RESOURCES_DIR:-}" || "${TERM:-}" == xterm-kitty ]] || return 0
+  m3_ui_kitty_supported || return 0
   command -v python3 >/dev/null 2>&1 || return 0
   python3 "$M3_UI_LIB_DIR/logo-graphics.py" 2>/dev/null || true
 }
@@ -44,7 +48,9 @@ m3_ui_header() {
   subtitle="$(m3_ui_clean_text "$subtitle")"
   printf '\033[?25l\033[H\033[2J'
   if (( cols >= 56 )); then
-    printf '\033[1;32m  ███╗   ███╗³\033[0m   \033[1;37mDEVOPS\033[0m\n'
+    local raised_three='³'
+    if m3_ui_kitty_supported; then raised_three=' '; fi
+    printf '\033[1;32m  ███╗   ███╗%s\033[0m   \033[1;37mDEVOPS\033[0m\n' "$raised_three"
     printf '\033[1;32m  ████╗ ████║ \033[0m   \033[1;37mWORKSTATION\033[0m\n'
     printf '\033[1;32m  ██╔████╔██║ \033[0m   \033[2m%-28.28s\033[0m\n' "$subtitle"
     printf '\033[1;32m  ██║╚██╔╝██║ \033[0m\n'
