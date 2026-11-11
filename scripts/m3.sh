@@ -129,11 +129,15 @@ m3_launch_tool() {
   esac
 }
 
-select_tools() {
+select_tools() (
   local key next i cursor=0 page_size rows cols page_start row index total
   local name state line checked tool old_cursor old_page_start redraw=1
   local -a actions=('Install selected' 'Automatic installation preview' 'Update Check' 'Workstation readiness' 'Docker & Compose' 'Back to main menu')
   total=$(( ${#tools[@]} + ${#actions[@]} ))
+  local saved_tty
+  saved_tty="$(stty -g 2>/dev/null)" || return 1
+  trap 'stty "$saved_tty" 2>/dev/null; printf "\\033[?25h"' EXIT
+  stty -echo -icanon min 1 time 0 || return 1
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'Interactive selection requires a terminal.\n'
     return
@@ -163,7 +167,7 @@ select_tools() {
         line="$checked $name"
       fi
       # Avoid terminal autowrap: strip ANSI only for measuring visible width.
-      local plain="$line" maxwidth=$((cols-9))
+      local plain="$line" maxwidth=$((cols-10))
       plain="$(printf '%b' "$plain" | sed -E 's/\x1B\[[0-9;]*[[:alpha:]]//g')"
       if (( ${#plain} > maxwidth )); then
         # Render a compact, uncolored row instead of overflowing.
@@ -181,6 +185,7 @@ select_tools() {
     m3_ui_terminal_size
     rows="$M3_ROWS"; cols="$M3_COLS"
     page_size=$((rows-14)); ((page_size>0)) || page_size=1
+    (( cols > 25 )) || cols=25
     page_start=$((cursor/page_size*page_size))
 
     if (( redraw )); then
@@ -193,7 +198,7 @@ select_tools() {
     printf '\033[%d;1H\033[2K  %d–%d / %d entries' "$((rows-3))" \
       "$((page_start+1))" "$((page_start+page_size<total?page_start+page_size:total))" "$total"
     printf '\033[%d;1H\033[2K  [-] Installed · [x] Selected · [ ] Missing' "$((rows-2))"
-    printf '\033[%d;1H\033[2K  ↑/↓ Navigate  Space Select  Enter Launch/Open  Esc Back' "$((rows-1))"
+    printf '\033[%d;1H\033[2K  ^ v Move  [Space] Select  [Enter] Open  [Esc] Back' "$((rows-1))"
     redraw=0
     fi
 
@@ -248,7 +253,7 @@ select_tools() {
       render_tool_rows "$old_cursor" "$cursor"
     fi
   done
-}
+)
 
 print_link() {
   local url="$1"
