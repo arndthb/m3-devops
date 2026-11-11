@@ -418,10 +418,12 @@ update_m3() {
 }
 
 main_menu() {
-  local cursor=0 old_cursor key next secret_count=0 row_step=1 term_rows=24 term_cols=80
-  local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Container Manager' 'Hermes Agent' 'Codex CLI' 'VSCodium' 'ChatGPT Desktop' 'Update m³' 'Settings' 'Info' 'Exit')
-  local -a icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ A ]' '[ O ]' '[ V ]' '[ C ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
-  local -a nerd_icons=('[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]')
+  local cursor=0 old_cursor key next secret_count=0 row_step=1 term_rows=24 term_cols=80 app_index=0
+  local -a app_names=('Hermes Agent' 'Codex CLI' 'VSCodium' 'ChatGPT Desktop')
+  local -a app_tools=('hermes' 'codex' 'codium' 'chatgpt')
+  local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Container Manager' 'Applications' 'Update m³' 'Settings' 'Info' 'Exit')
+  local -a icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ A ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
+  local -a nerd_icons=('[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]')
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
     return 1
@@ -451,23 +453,33 @@ main_menu() {
       printf '      \033[2;36m%s\033[0m  %s' "${icons[index]}" "${items[index]}"
     fi
   }
+  render_app_choice() {
+    local row=$((8 + 5 * row_step + 1))
+    printf '\\033[%d;1H\\033[2K' "$row"
+    if (( cursor == 5 )); then
+      printf '       \\033[1;32m◀  %s  ▶\\033[0m' "${app_names[app_index]}"
+    else
+      printf '       \\033[2m◀  %s  ▶\\033[0m' "${app_names[app_index]}"
+    fi
+  }
   render_main_menu() {
     read -r term_rows term_cols < <(stty size 2>/dev/null || printf '24 80\n')
     (( term_rows > 0 )) || term_rows=24
     (( term_cols > 0 )) || term_cols=80
     row_step=1
-    if (( term_rows >= 36 && term_cols >= 65 )); then row_step=2; fi
+    if (( term_rows >= 30 && term_cols >= 65 )); then row_step=2; fi
     printf '\033[?25l\033[H\033[2J'
     print_main_banner
     if [[ "$(m3_icon_mode)" == nerd ]]; then
       icons=("${nerd_icons[@]}")
     else
-      icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ A ]' '[ O ]' '[ V ]' '[ G ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
+      icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ A ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
     fi
     for i in "${!items[@]}"; do
       render_menu_row "$i"
     done
-    printf '\033[%d;1H\033[2K\033[2m  ↑ / ↓ Navigate    •    Enter Select    •    Esc Exit\033[0m' "$((8 + ${#items[@]} * row_step + 1))"
+    render_app_choice
+    printf '\033[%d;1H\033[2K\033[2m  ↑/↓ Menu  ←/→ Applications  Enter Launch/Open  Esc Exit\033[0m' "$((8 + ${#items[@]} * row_step + 1))"
   }
   render_main_menu
   while true; do
@@ -490,6 +502,8 @@ main_menu() {
             case "$next" in
               A) old_cursor=$cursor; cursor=$(( (cursor + ${#items[@]} - 1) % ${#items[@]} )); render_menu_row "$old_cursor"; render_menu_row "$cursor" ;;
               B) old_cursor=$cursor; cursor=$(( (cursor + 1) % ${#items[@]} )); render_menu_row "$old_cursor"; render_menu_row "$cursor" ;;
+              C) if (( cursor == 5 )); then app_index=$(( (app_index+1) % ${#app_names[@]} )); render_app_choice; fi ;;
+              D) if (( cursor == 5 )); then app_index=$(( (app_index+${#app_names[@]}-1) % ${#app_names[@]} )); render_app_choice; fi ;;
             esac
           fi
         else
@@ -504,14 +518,11 @@ main_menu() {
           2) select_tools ;;
           3) bash "$SCRIPT_DIR/project-manager.sh" || printf 'Project scan failed.\n' ;;
           4) bash "$SCRIPT_DIR/container-manager.sh" || { printf "Container Manager failed.\n"; pause_menu; } ;;
-          5) m3_launch_tool hermes || true; pause_menu || return 0 ;;
-          6) m3_launch_tool codex || true; pause_menu || return 0 ;;
-          7) m3_launch_tool codium || true; pause_menu || return 0 ;;
-          8) m3_launch_tool chatgpt || true; pause_menu || return 0 ;;
-          9) if update_m3; then for seconds in 3 2 1; do printf '\r  Returning to main menu in %s... ' "$seconds"; sleep 1; done; printf '\n'; if [[ "${M3_RESTART_REQUIRED:-0}" == 1 ]]; then exec bash "$SCRIPT_DIR/m3.sh"; fi; else pause_menu || return 0; fi ;;
-          10) show_settings_page ;;
-          11) show_settings; pause_menu || return 0 ;;
-          12) return 0 ;;
+          5) m3_launch_tool "${app_tools[app_index]}" || true; pause_menu || return 0 ;;
+          6) if update_m3; then for seconds in 3 2 1; do printf '\r  Returning to main menu in %s... ' "$seconds"; sleep 1; done; printf '\n'; if [[ "${M3_RESTART_REQUIRED:-0}" == 1 ]]; then exec bash "$SCRIPT_DIR/m3.sh"; fi; else pause_menu || return 0; fi ;;
+          7) show_settings_page ;;
+          8) show_settings; pause_menu || return 0 ;;
+          9) return 0 ;;
         esac
         render_main_menu
         ;;
