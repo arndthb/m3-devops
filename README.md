@@ -80,7 +80,7 @@ The catalog includes Git, Podman, Distrobox, kubectl, Go, Terraform, VSCodium, H
 | kind | `go install` into `~/.local/bin`; Go and a container provider required |
 | Hermes Agent | Official Nous Research installer; requires subsequent provider setup |
 | Codex CLI | Official OpenAI installer; sign in separately with ChatGPT |
-| ChatGPT Desktop | Detected and listed; installation remains manual until an RPM compatible with the Fedora release is confirmed |
+| ChatGPT Desktop | Download official Fedora RPM from [OpenAI Linux installation guide](https://learn.chatgpt.com/docs/linux/linux-app), save as `~/Downloads/chatgpt.x86_64.rpm` (or `chatgpt.aarch64.rpm`), then select ChatGPT in Tool Manager; Fedora 45 is not officially supported |
 | JetBrainsMono Nerd Font | Installed in the user's font directory; select the font in terminal preferences |
 | Podman, make, curl | Detected; installation availability depends on the current approved recipe |
 
