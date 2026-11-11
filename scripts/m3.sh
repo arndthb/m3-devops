@@ -501,7 +501,7 @@ main_menu() {
             IFS= read -rsn1 -t 0.15 next || continue
             case "$next" in
               A) old_cursor=$cursor; cursor=$(( (cursor + ${#items[@]} - 1) % ${#items[@]} )); render_menu_row "$old_cursor"; render_menu_row "$cursor"; render_app_choice ;;
-              B) old_cursor=$cursor; cursor=$(( (cursor + 1) % ${#items[@]} )); render_menu_row "$old_cursor"; render_menu_row "$cursor" ;;
+              B) old_cursor=$cursor; cursor=$(( (cursor + 1) % ${#items[@]} )); render_menu_row "$old_cursor"; render_menu_row "$cursor"; render_app_choice ;;
               C) if (( cursor == 5 )); then app_index=$(( (app_index+1) % ${#app_names[@]} )); render_app_choice; fi ;;
               D) if (( cursor == 5 )); then app_index=$(( (app_index+${#app_names[@]}-1) % ${#app_names[@]} )); render_app_choice; fi ;;
             esac
