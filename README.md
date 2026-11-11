@@ -53,10 +53,7 @@ bash scripts/install-launcher.sh
 | DevOps Tool Manager | Detect, select and install supported development tools |
 | DevOps Project Manager | Browse local Git and Compose projects |
 | Container Manager | Inspect Podman containers, images, networks, volumes and disk usage |
-| Hermes Agent | Start Hermes directly from the home screen when installed |
-| Codex CLI | Start Codex interactively from the home screen when installed |
-| VSCodium | Open VSCodium from the home screen when installed |
-| ChatGPT Desktop | Open the desktop application when installed and a launcher is available |
+| Applications | Select Hermes, Codex CLI, VSCodium or ChatGPT Desktop using ←/→, then press Enter to launch |
 | Update m³ | Update the local checkout from `origin/main` |
 | Settings | Choose classic markers or Nerd Font icons; offer font installation when missing |
 | Info | Project information |
