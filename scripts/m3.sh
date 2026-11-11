@@ -419,9 +419,9 @@ update_m3() {
 
 main_menu() {
   local cursor=0 old_cursor key next secret_count=0 row_step=1 term_rows=24 term_cols=80
-  local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Container Manager' 'Update m³' 'Settings' 'Info' 'Exit')
-  local -a icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
-  local -a nerd_icons=('[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]')
+  local -a items=('System diagnostics' 'Workstation health check' 'DevOps Tool Manager' 'DevOps Project Manager' 'Container Manager' 'Hermes Agent' 'Codex CLI' 'VSCodium' 'ChatGPT Desktop' 'Update m³' 'Settings' 'Info' 'Exit')
+  local -a icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ A ]' '[ O ]' '[ V ]' '[ G ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
+  local -a nerd_icons=('[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]' '[  ]')
   if [[ ! -t 0 || ! -t 1 ]]; then
     printf 'm³ requires an interactive terminal for arrow-key navigation.\n' >&2
     return 1
@@ -456,19 +456,18 @@ main_menu() {
     (( term_rows > 0 )) || term_rows=24
     (( term_cols > 0 )) || term_cols=80
     row_step=1
-    if (( term_rows >= 29 && term_cols >= 65 )); then row_step=2; fi
+    if (( term_rows >= 36 && term_cols >= 65 )); then row_step=2; fi
     printf '\033[?25l\033[H\033[2J'
     print_main_banner
     if [[ "$(m3_icon_mode)" == nerd ]]; then
       icons=("${nerd_icons[@]}")
     else
-      icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
+      icons=('[ S ]' '[ H ]' '[ T ]' '[ P ]' '[ C ]' '[ A ]' '[ O ]' '[ V ]' '[ G ]' '[ U ]' '[ G ]' '[ i ]' '[ X ]')
     fi
     for i in "${!items[@]}"; do
       render_menu_row "$i"
-      if (( row_step == 2 )); then printf '\n\n'; else printf '\n'; fi
     done
-    printf '\n\033[2m  ↑ / ↓ Navigate    •    Enter Select    •    Esc Exit\033[0m\n'
+    printf '\033[%d;1H\033[2K\033[2m  ↑ / ↓ Navigate    •    Enter Select    •    Esc Exit\033[0m' "$((8 + ${#items[@]} * row_step + 1))"
   }
   render_main_menu
   while true; do
@@ -505,10 +504,14 @@ main_menu() {
           2) select_tools ;;
           3) bash "$SCRIPT_DIR/project-manager.sh" || printf 'Project scan failed.\n' ;;
           4) bash "$SCRIPT_DIR/container-manager.sh" || { printf "Container Manager failed.\n"; pause_menu; } ;;
-          5) if update_m3; then for seconds in 3 2 1; do printf '\r  Returning to main menu in %s... ' "$seconds"; sleep 1; done; printf '\n'; if [[ "${M3_RESTART_REQUIRED:-0}" == 1 ]]; then exec bash "$SCRIPT_DIR/m3.sh"; fi; else pause_menu || return 0; fi ;;
-          6) show_settings_page ;;
-          7) show_settings; pause_menu || return 0 ;;
-          8) return 0 ;;
+          5) m3_launch_tool hermes || true; pause_menu || return 0 ;;
+          6) m3_launch_tool codex || true; pause_menu || return 0 ;;
+          7) m3_launch_tool codium || true; pause_menu || return 0 ;;
+          8) m3_launch_tool chatgpt || true; pause_menu || return 0 ;;
+          9) if update_m3; then for seconds in 3 2 1; do printf '\r  Returning to main menu in %s... ' "$seconds"; sleep 1; done; printf '\n'; if [[ "${M3_RESTART_REQUIRED:-0}" == 1 ]]; then exec bash "$SCRIPT_DIR/m3.sh"; fi; else pause_menu || return 0; fi ;;
+          10) show_settings_page ;;
+          11) show_settings; pause_menu || return 0 ;;
+          12) return 0 ;;
         esac
         render_main_menu
         ;;
