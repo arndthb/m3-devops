@@ -48,13 +48,19 @@ m3_ui_header() {
   subtitle="$(m3_ui_clean_text "$subtitle")"
   printf '\033[?25l\033[H\033[2J'
   if (( cols >= 56 )); then
+    local logo_graphic=0
+    local -a logo_lines=('███╗   ███╗' '████╗ ████║' '██╔████╔██║' '██║╚██╔╝██║' '╚═╝ ╚═╝ ╚═╝')
+    if declare -F m3_ui_kitty_supported >/dev/null 2>&1 && m3_ui_kitty_supported && [[ -f "${M3_UI_LIB_DIR}/logo-graphics.py" ]]; then
+      logo_graphic=1
+      logo_lines=('             ' '             ' '             ' '             ' '             ')
+    fi
     local raised_three='³'
-    if m3_ui_kitty_supported; then raised_three=' '; fi
-    printf '\033[1;32m  ███╗   ███╗%s\033[0m   \033[1;37mDEVOPS\033[0m\n' "$raised_three"
-    printf '\033[1;32m  ████╗ ████║ \033[0m   \033[1;37mWORKSTATION\033[0m\n'
-    printf '\033[1;32m  ██╔████╔██║ \033[0m   \033[2m%-28.28s\033[0m\n' "$subtitle"
-    printf '\033[1;32m  ██║╚██╔╝██║ \033[0m\n'
-    printf '\033[1;32m  ╚═╝ ╚═╝ ╚═╝ \033[0m   \033[36m%-28.28s\033[0m\n' "$section"
+    if (( logo_graphic )); then raised_three=' '; fi
+    printf '\033[1;32m  %s%s\033[0m   \033[1;37mDEVOPS\033[0m\n' "${logo_lines[0]}" "$raised_three"
+    printf '\033[1;32m  %s \033[0m   \033[1;37mWORKSTATION\033[0m\n' "${logo_lines[1]}"
+    printf '\033[1;32m  %s \033[0m   \033[2m%-28.28s\033[0m\n' "${logo_lines[2]}" "$subtitle"
+    printf '\033[1;32m  %s \033[0m\n' "${logo_lines[3]}"
+    printf '\033[1;32m  %s \033[0m   \033[36m%-28.28s\033[0m\n' "${logo_lines[4]}" "$section"
     m3_ui_graphic_three\n    printf '\033[32m  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n\n'
   else
     printf '\033[1;32m  m³ DEVOPS WORKSTATION\033[0m\n'
