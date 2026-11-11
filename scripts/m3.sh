@@ -482,12 +482,28 @@ main_menu() {
   }
   render_app_choice() {
     local row=$((8 + 5 * row_step + 1))
+    local i label
     printf '\033[%d;1H\033[2K' "$row"
-    if (( cursor == 5 )); then
-      printf '       \033[1;32m◀  %s  ▶\033[0m' "${app_names[app_index]}"
-    else
-      printf '       \033[2m◀  %s  ▶\033[0m' "${app_names[app_index]}"
-    fi
+    printf '       '
+    for i in "${!app_names[@]}"; do
+      label="${app_names[i]}"
+      if (( term_cols < 76 )); then
+        case "$i" in
+          0) label='Hermes' ;;
+          1) label='Codex' ;;
+          2) label='VSCodium' ;;
+          3) label='ChatGPT' ;;
+        esac
+      fi
+      if (( i == app_index && cursor == 5 )); then
+        printf '\033[1;30;42m %s \033[0m' "$label"
+      elif (( i == app_index )); then
+        printf '\033[1;32m %s \033[0m' "$label"
+      else
+        printf '\033[2m %s \033[0m' "$label"
+      fi
+      if (( i < ${#app_names[@]} - 1 )); then printf ' '; fi
+    done
   }
   render_main_menu() {
     read -r term_rows term_cols < <(stty size 2>/dev/null || printf '24 80\n')
