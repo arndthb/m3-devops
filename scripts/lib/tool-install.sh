@@ -56,6 +56,7 @@ m3_install_environment() {
 m3_install_command() {
   if [[ "$(m3_package_manager)" == dnf ]]; then
     case "$1" in
+      chatgpt) printf 'Install official ChatGPT RPM from ~/Downloads (Fedora 43/44 supported; Fedora 45 experimental)' ; return 0 ;;
       codex) printf 'Official OpenAI Codex CLI standalone installer (user-local)' ; return 0 ;;
       hermes) printf 'Official Nous Research Hermes Agent installer (user-local; source reviewed before execution)' ; return 0 ;;
       distrobox) printf 'sudo dnf install -y distrobox' ; return 0 ;;
@@ -171,6 +172,56 @@ m3_install_tool() {
         }
         return 0 ;;
     esac
+  fi
+  if [[ "$tool" == chatgpt ]]; then
+    environment="$(m3_install_environment)" || {
+      printf '  ChatGPT: installation blocked: %s.\n' "$environment"
+      return 2
+    }
+    if [[ "$(m3_package_manager)" != dnf ]]; then
+      printf '  ChatGPT RPM installation requires a Fedora DNF host.\n'
+      return 2
+    fi
+    if m3_tool_present chatgpt; then
+      printf '  ChatGPT Desktop already installed.\n'
+      return 0
+    fi
+    local fedora_version arch rpm_file
+    fedora_version="$(rpm -E '%fedora' 2>/dev/null)" || return 2
+    case "$fedora_version" in
+      43|44) ;;
+      *) printf '  WARNING: Fedora %s is not officially supported by ChatGPT Linux preview (43/44 only).\n' "$fedora_version"
+         printf '  The RPM may fail dependency or signature checks. No security checks will be bypassed.\n' ;;
+    esac
+    case "$(uname -m)" in
+      x86_64) arch=x86_64 ;;
+      aarch64) arch=aarch64 ;;
+      *) printf '  Unsupported ChatGPT architecture.\n'; return 2 ;;
+    esac
+    rpm_file="$HOME/Downloads/chatgpt.$arch.rpm"
+    if [[ ! -f "$rpm_file" ]]; then
+      printf '  Official ChatGPT RPM not found: %s\n' "$rpm_file"
+      printf '  Download the %s Fedora RPM from:\n' "$arch"
+      printf '  https://learn.chatgpt.com/docs/linux/linux-app\n'
+      printf '  Save it as %s and retry Install selected.\n' "$rpm_file"
+      return 2
+    fi
+    if ! command -v rpm >/dev/null 2>&1 || ! command -v dnf >/dev/null 2>&1; then
+      printf '  RPM and DNF are required.\n'
+      return 2
+    fi
+    if [[ "$(rpm -qp --qf '%{NAME} %{ARCH}' "$rpm_file" 2>/dev/null)" != "chatgpt $arch" ]]; then
+      printf '  RPM metadata does not match ChatGPT for %s. Installation aborted.\n' "$arch"
+      return 2
+    fi
+    printf '  Installing local ChatGPT RPM using Fedora DNF (signature verification enabled)...\n'
+    sudo dnf install -y "$rpm_file" || return 1
+    if ! m3_tool_present chatgpt; then
+      printf '  ChatGPT installed but was not detected.\n'
+      return 1
+    fi
+    printf '  ChatGPT installed. Launch from Applications and sign in.\n'
+    return 0
   fi
   if [[ "$tool" == codex ]]; then
     environment="$(m3_install_environment)" || {

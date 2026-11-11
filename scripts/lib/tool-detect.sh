@@ -71,12 +71,12 @@ m3_tool_hint() {
     codium) printf 'Review VSCodium Flatpak (com.vscodium.codium)' ;;
     hermes) printf 'Review Hermes agent installation and PATH' ;;
     codex) printf 'Official OpenAI Codex CLI for Linux' ;;
-    chatgpt) printf 'Official ChatGPT RPM: Fedora 43/44 supported; download from OpenAI' ;;
-    docker) printf 'Docker engine/CLI differs from Bluefin Podman' ;;
+    chatgpt) printf 'Download official Fedora RPM to ~/Downloads; Fedora 45 is experimental' ;;
+    docker) printf 'Docker Engine requires its own daemon; Podman is separate' ;;
     compose) printf 'Install Docker Compose plugin or Podman Compose provider' ;;
     kind) printf 'Needs a working Docker/Podman container provider' ;;
     make|curl) printf 'Review host packages or an approved Homebrew formula' ;;
-    podman|distrobox) printf 'Bluefin-integrated; review OS-managed setup' ;;
+    podman|distrobox) printf 'Review Fedora host package availability' ;;
     *) printf 'No approved install recipe yet' ;;
   esac
 }
