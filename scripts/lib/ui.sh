@@ -61,7 +61,8 @@ m3_ui_header() {
     printf '\033[1;32m  %s \033[0m   \033[2m%-28.28s\033[0m\n' "${logo_lines[2]}" "$subtitle"
     printf '\033[1;32m  %s \033[0m\n' "${logo_lines[3]}"
     printf '\033[1;32m  %s \033[0m   \033[36m%-28.28s\033[0m\n' "${logo_lines[4]}" "$section"
-    m3_ui_graphic_three\n    printf '\033[32m  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n\n'
+    m3_ui_graphic_three
+    printf '\033[32m  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n\n'
   else
     printf '\033[1;32m  m³ DEVOPS WORKSTATION\033[0m\n'
     printf '  %-28.28s\n' "$section"
