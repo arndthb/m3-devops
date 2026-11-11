@@ -463,13 +463,19 @@ main_menu() {
   # The terminal owns font size; use block lettering, bold text and framed icons.
   print_main_banner() {
     if (( term_cols >= 56 )); then
+      local logo_graphic=0
+      local -a logo_lines=('███╗   ███╗' '████╗ ████║' '██╔████╔██║' '██║╚██╔╝██║' '╚═╝ ╚═╝ ╚═╝')
+      if declare -F m3_ui_kitty_supported >/dev/null 2>&1 && m3_ui_kitty_supported && [[ -f "${M3_UI_LIB_DIR}/logo-graphics.py" ]]; then
+        logo_graphic=1
+        logo_lines=('             ' '             ' '             ' '             ' '             ')
+      fi
       local raised_three='³'
-      if declare -F m3_ui_kitty_supported >/dev/null 2>&1 && m3_ui_kitty_supported && declare -F m3_ui_graphic_three >/dev/null 2>&1; then raised_three=' '; fi
-      printf '\033[1;32m  ███╗   ███╗%s\033[0m   \033[1;37mDEVOPS\033[0m\n' "$raised_three"
-      printf '\033[1;32m  ████╗ ████║ \033[0m   \033[1;37mWORKSTATION\033[0m\n'
-      printf '\033[1;32m  ██╔████╔██║ \033[0m   \033[2mBUILD · RUN · SHIP\033[0m\n'
-      printf '\033[1;32m  ██║╚██╔╝██║ \033[0m   \033[2mLinux / Fedora\033[0m\n'
-      printf '\033[1;32m  ╚═╝ ╚═╝ ╚═╝ \033[0m   \033[36mDevOps Workstation Setup\033[0m\n'
+      if (( logo_graphic )); then raised_three=' '; fi
+      printf '\033[1;32m  %s%s\033[0m   \033[1;37mDEVOPS\033[0m\n' "${logo_lines[0]}" "$raised_three"
+      printf '\033[1;32m  %s \033[0m   \033[1;37mWORKSTATION\033[0m\n' "${logo_lines[1]}"
+      printf '\033[1;32m  %s \033[0m   \033[2mBUILD · RUN · SHIP\033[0m\n' "${logo_lines[2]}"
+      printf '\033[1;32m  %s \033[0m   \033[2mLinux / Fedora\033[0m\n' "${logo_lines[3]}"
+      printf '\033[1;32m  %s \033[0m   \033[36mDevOps Workstation Setup\033[0m\n' "${logo_lines[4]}"
       if declare -F m3_ui_graphic_three >/dev/null 2>&1; then
         m3_ui_graphic_three
       fi
