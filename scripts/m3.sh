@@ -42,6 +42,31 @@ pause_menu() {
   IFS= read -r _ || return 1
 }
 
+m3_open_terminal() {
+  local executable="$1" terminal=""
+  if command -v ptyxis >/dev/null 2>&1; then
+    terminal=ptyxis
+  elif command -v gnome-terminal >/dev/null 2>&1; then
+    terminal=gnome-terminal
+  elif command -v kgx >/dev/null 2>&1; then
+    terminal=kgx
+  elif command -v xterm >/dev/null 2>&1; then
+    terminal=xterm
+  else
+    printf '  No supported terminal emulator found (Ptyxis, GNOME Terminal, Console or xterm).\n'
+    return 1
+  fi
+  # Pass the executable as an argument, never interpolate it into a shell command.
+  case "$terminal" in
+    ptyxis) ptyxis --new-window -- "$executable" >/dev/null 2>&1 & ;;
+    gnome-terminal) gnome-terminal -- "$executable" >/dev/null 2>&1 & ;;
+    kgx) kgx -- "$executable" >/dev/null 2>&1 & ;;
+    xterm) xterm -e "$executable" >/dev/null 2>&1 & ;;
+  esac
+  disown
+  printf '  Opened %s in a separate terminal window.\n' "$(basename "$executable")"
+}
+
 m3_launch_tool() {
   local tool="$1" cmd=""
   if ! m3_tool_present "$tool"; then
@@ -70,14 +95,16 @@ m3_launch_tool() {
         printf '  ChatGPT is detected, but no supported launcher was found.\n'; return 1
       fi ;;
     hermes)
-      if command -v hermes >/dev/null 2>&1; then hermes
-      elif [[ -x "$HOME/.local/bin/hermes" ]]; then "$HOME/.local/bin/hermes"
-      elif command -v hermes-agent >/dev/null 2>&1; then hermes-agent
-      else printf '  Hermes launcher not found.\n'; return 1; fi ;;
+      if command -v hermes >/dev/null 2>&1; then cmd="$(command -v hermes)"
+      elif [[ -x "$HOME/.local/bin/hermes" ]]; then cmd="$HOME/.local/bin/hermes"
+      elif command -v hermes-agent >/dev/null 2>&1; then cmd="$(command -v hermes-agent)"
+      else printf '  Hermes launcher not found.\n'; return 1; fi
+      m3_open_terminal "$cmd" ;;
     codex)
-      if command -v codex >/dev/null 2>&1; then codex
-      elif [[ -x "$HOME/.local/bin/codex" ]]; then "$HOME/.local/bin/codex"
-      else printf '  Codex launcher not found.\n'; return 1; fi ;;
+      if command -v codex >/dev/null 2>&1; then cmd="$(command -v codex)"
+      elif [[ -x "$HOME/.local/bin/codex" ]]; then cmd="$HOME/.local/bin/codex"
+      else printf '  Codex launcher not found.\n'; return 1; fi
+      m3_open_terminal "$cmd" ;;
     git) git --version ;;
     podman) podman --version ;;
     distrobox) distrobox --version ;;
