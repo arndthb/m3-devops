@@ -463,11 +463,11 @@ main_menu() {
   # The terminal owns font size; use block lettering, bold text and framed icons.
   print_main_banner() {
     if (( term_cols >= 56 )); then
-      printf '\033[1;32m  ███╗   ███╗³\033[0m   \033[1;37mDEVOPS\033[0m\n'
-      printf '\033[1;32m  ████╗ ████║ \033[0m   \033[1;37mWORKSTATION\033[0m\n'
-      printf '\033[1;32m  ██╔████╔██║ \033[0m   \033[2mBUILD · RUN · SHIP\033[0m\n'
-      printf '\033[1;32m  ██║╚██╔╝██║ \033[0m   \033[2mLinux / Fedora\033[0m\n'
-      printf '\033[1;32m  ╚═╝ ╚═╝ ╚═╝ \033[0m   \033[36mDevOps Workstation Setup\033[0m\n'
+      printf '\033[1;32m  ███╗   ███╗ ███\033[0m   \033[1;37mDEVOPS\033[0m\n'
+      printf '\033[1;32m  ████╗ ████║   █ \033[0m   \033[1;37mWORKSTATION\033[0m\n'
+      printf '\033[1;32m  ██╔████╔██║  ██ \033[0m   \033[2mBUILD · RUN · SHIP\033[0m\n'
+      printf '\033[1;32m  ██║╚██╔╝██║   █ \033[0m   \033[2mLinux / Fedora\033[0m\n'
+      printf '\033[1;32m  ╚═╝ ╚═╝ ╚═╝ ███ \033[0m   \033[36mDevOps Workstation Setup\033[0m\n'
       printf '\033[32m  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n\n'
     else
       printf '\033[1;32m  m³ DEVOPS WORKSTATION\033[0m\n'
