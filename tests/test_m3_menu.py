@@ -108,6 +108,9 @@ def test_readiness_menu_return():
         bindir.mkdir()
         (bindir / "dirname").symlink_to("/usr/bin/dirname")
         (bindir / "bash").symlink_to("/bin/bash")
+        # Interactive menus require stty; rendering also uses sed.
+        (bindir / "stty").symlink_to(shutil.which("stty"))
+        (bindir / "sed").symlink_to(shutil.which("sed"))
         env = dict(os.environ)
         env["HOME"] = d
         env["PATH"] = str(bindir)
@@ -137,6 +140,9 @@ def test_docker_guide_return():
         bindir.mkdir()
         (bindir / "dirname").symlink_to("/usr/bin/dirname")
         (bindir / "bash").symlink_to("/bin/bash")
+        # Interactive menus require stty; rendering also uses sed.
+        (bindir / "stty").symlink_to(shutil.which("stty"))
+        (bindir / "sed").symlink_to(shutil.which("sed"))
         env = dict(os.environ)
         env["HOME"] = d
         env["PATH"] = str(bindir)
@@ -210,6 +216,9 @@ def test_selected_docker_opens_manual_bluefin_guide():
         bindir.mkdir()
         (bindir / "dirname").symlink_to("/usr/bin/dirname")
         (bindir / "bash").symlink_to("/bin/bash")
+        # Interactive menus require stty; rendering also uses sed.
+        (bindir / "stty").symlink_to(shutil.which("stty"))
+        (bindir / "sed").symlink_to(shutil.which("sed"))
         env = dict(os.environ)
         env["PATH"] = str(bindir)
         env["HOME"] = d
