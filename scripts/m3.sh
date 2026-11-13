@@ -309,7 +309,8 @@ show_settings_page() {
     else
       printf '  JetBrainsMono Nerd Font: missing.\n'
     fi
-    printf '  Uses compatible Nerd Font icons (BMP / Font Awesome).\n'\n    printf '  Terminal font may still need to be selected in terminal preferences.\n\n'
+    printf '  Uses compatible Nerd Font icons (BMP / Font Awesome).\n'
+    printf '  Terminal font may still need to be selected in terminal preferences.\n\n'
     printf '  [n] Nerd Font icons (install font if missing)\n'
     printf '  [c] Classic markers   [Enter] Back\n'
     IFS= read -rsn1 key || return 0
