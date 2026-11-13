@@ -128,6 +128,14 @@ This command reports tool availability without installing software.
 
 m³ is an **experimental** workstation tool, not an unattended fleet provisioning solution. Some installers download and execute upstream scripts; use only sources you trust and review changes before running them. A successful installation is not proof of a healthy service. Do not put API keys, tokens or passwords in the repository.
 
+## 📦 GHCR / CI/CD learning demo
+
+A separate, minimal Go HTTP service demonstrates **GitHub Actions → tests → multi-architecture Docker build → GitHub Container Registry → Kubernetes**.
+
+See [GHCR demo instructions](examples/ghcr-demo/README.md) and the [publishing workflow](.github/workflows/ghcr-demo.yml).
+
+> **Note:** The GHCR demo is intentionally separate from the Fedora host installer. It does not package or replace the m³ workstation application.
+
 ## Roadmap
 
 - Fedora-first installer validation and automated shell checks
