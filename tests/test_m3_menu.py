@@ -87,7 +87,7 @@ def test_tool_manager_paging():
         try:
             term.expect(b"DevOps Workstation Setup")
             term.send(b"\x1b[B" * 2 + b"\r")
-            term.expect(b"DevOps Tool Manager", timeout=5)
+            term.expect(b"TOOLCHAIN", timeout=8)
             term.expect(b"VSCodium", timeout=5)
             term.expect(b"Hermes", timeout=5)
             at = len(term.output)
@@ -115,7 +115,7 @@ def test_readiness_menu_return():
         try:
             term.expect(b"DevOps Workstation Setup")
             term.send(b"\x1b[B" * 2 + b"\r")
-            term.expect(b"DevOps Tool Manager")
+            term.expect(b"TOOLCHAIN", timeout=8)
             at = len(term.output)
             term.send(b"\x1b[B" * 19)
             term.expect(b"Workstation readiness", timeout=5, after=at)
@@ -144,7 +144,7 @@ def test_docker_guide_return():
         try:
             term.expect(b"DevOps Workstation Setup")
             term.send(b"\x1b[B" * 2 + b"\r")
-            term.expect(b"DevOps Tool Manager")
+            term.expect(b"TOOLCHAIN", timeout=8)
             at = len(term.output)
             term.send(b"\x1b[B" * 20)
             term.expect(b"Docker & Compose", timeout=6, after=at)
@@ -217,7 +217,7 @@ def test_selected_docker_opens_manual_bluefin_guide():
         try:
             term.expect(b"DevOps Workstation Setup")
             term.send(b"\x1b[B" * 2 + b"\r")
-            term.expect(b"DevOps Tool Manager")
+            term.expect(b"TOOLCHAIN", timeout=8)
             # Docker is item 9 in the 13-tool inventory.
             term.send(b"\x1b[B" * 8 + b" " + b"\r")
             term.expect(b"SELECTED TOOLS", timeout=5)
@@ -258,7 +258,7 @@ def test_confirmed_tool_install_via_menu():
         try:
             term.expect(b"DevOps Workstation Setup")
             term.send(b"\x1b[B" * 2 + b"\r")
-            term.expect(b"DevOps Tool Manager")
+            term.expect(b"TOOLCHAIN", timeout=8)
             term.send(b"\x1b[B" * 4 + b" " + b"\r")
             term.expect(b"SELECTED TOOLS", timeout=5)
             term.expect(b"brew install --formula go", timeout=5)
@@ -302,7 +302,7 @@ def test_terraform_requires_explicit_confirmation():
         try:
             term.expect(b"DevOps Workstation Setup")
             term.send(b"\x1b[B" * 2 + b"\r")
-            term.expect(b"DevOps Tool Manager")
+            term.expect(b"TOOLCHAIN", timeout=8)
             term.send(b"\x1b[B" * 5 + b" " + b"\r")
             term.expect(b"brew tap hashicorp/tap && brew install --formula hashicorp/tap/terraform", timeout=5)
             assert not log.exists(), "Terraform began installing without approval"
@@ -347,7 +347,7 @@ def test_tool_batch_stops_after_first_failure():
         try:
             term.expect(b"DevOps Workstation Setup")
             term.send(b"\x1b[B" * 2 + b"\r")
-            term.expect(b"DevOps Tool Manager")
+            term.expect(b"TOOLCHAIN", timeout=8)
             term.send(b"\x1b[B" * 3 + b" " + b"\x1b[B" + b" " + b"\r")
             term.expect(b"SELECTED TOOLS", timeout=5)
             term.expect(b"2 approved for Homebrew installation", timeout=5)
