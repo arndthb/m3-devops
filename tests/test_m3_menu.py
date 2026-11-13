@@ -91,8 +91,9 @@ def test_tool_manager_paging():
             term.expect(b"VSCodium", timeout=5)
             term.expect(b"Hermes", timeout=5)
             at = len(term.output)
-            # Move to the last group of the 16-item menu, which must page.
-            term.send(b"\x1b[B" * 11)
+            # Navigate to the final page of the 22-entry menu (16 tools + 6 actions).
+            # The Back action is at index 21; 11 moves only reach the middle page.
+            term.send(b"\x1b[B" * 21)
             term.expect(b"Automatic installation preview", after=at, timeout=5)
             term.expect(b"Back to main menu", after=at, timeout=5)
             print("PASS: expanded tool menu remains navigable on 24-row terminal")
