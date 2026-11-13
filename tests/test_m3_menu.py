@@ -174,7 +174,7 @@ def test_settings_roundtrip():
         term = Terminal(SCRIPT, env=env)
         try:
             term.expect(b"DevOps Workstation Setup")
-            term.send(b"\x1b[B" * 6 + b"\r")
+            term.send(b"\x1b[B" * 7 + b"\r")
             term.expect(b"Icon style: classic", timeout=5)
             at = len(term.output)
             term.send(b"n")
@@ -378,7 +378,7 @@ def test_info_return():
     term = Terminal(SCRIPT)
     try:
         term.expect(b"DevOps Workstation Setup")
-        term.send(b"\x1b[B" * 7 + b"\r")
+        term.send(b"\x1b[B" * 8 + b"\r")
         term.expect(b"ABOUT m", timeout=5)
         at = len(term.output)
         term.send(b"\r")
