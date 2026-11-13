@@ -167,9 +167,16 @@ def test_docker_guide_return():
 
 
 def test_settings_roundtrip():
-    # The icon preference is isolated to a temporary HOME.
+    # Simulate an installed Nerd Font so this tests preference persistence,
+    # not the separate font-install confirmation flow.
     with tempfile.TemporaryDirectory() as d:
+        bindir = Path(d) / "bin"
+        bindir.mkdir()
+        fc_list = bindir / "fc-list"
+        fc_list.write_text("#!/bin/sh\nprintf 'JetBrainsMono Nerd Font\\n'\n")
+        fc_list.chmod(0o755)
         env = dict(os.environ)
+        env["PATH"] = str(bindir) + os.pathsep + env["PATH"]
         env["HOME"] = d
         term = Terminal(SCRIPT, env=env)
         try:
