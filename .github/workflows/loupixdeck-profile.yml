@@ -1,0 +1,22 @@
+name: LoupixDeck CT profile checks
+on:
+  pull_request:
+    paths:
+      - 'integrations/loupixdeck/**'
+      - '.github/workflows/loupixdeck-profile.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'integrations/loupixdeck/**'
+      - '.github/workflows/loupixdeck-profile.yml'
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Fedora launcher syntax
+        run: |
+          bash -n integrations/loupixdeck/install.sh
+          bash -n integrations/loupixdeck/scripts/m3-deck.sh
+      - name: Validate portable package structure and layout
+        run: python3 -m unittest discover -s integrations/loupixdeck/tests -v
