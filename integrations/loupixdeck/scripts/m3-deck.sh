@@ -20,6 +20,7 @@ case "$action" in
    elif command -v flatpak >/dev/null 2>&1 && flatpak info com.vscodium.codium >/dev/null 2>&1; then
      flatpak run com.vscodium.codium >/dev/null 2>&1 &
    else printf 'VSCodium not installed.\n' >&2; exit 127; fi ;;
+ service-*)         python3 "$(dirname -- "$(readlink -f -- "$0")")/open_service.py" "${action#service-}" ;;
  health)          run_terminal 'uptime; free -h; df -h /' ;;
  docker-ps)       run_terminal 'docker ps' ;;
  docker-all)      run_terminal 'docker ps -a' ;;

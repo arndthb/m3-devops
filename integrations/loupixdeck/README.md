@@ -4,8 +4,8 @@
 
 ## Features
 
-- Four workspaces, **12 touch keys each**: Home, Docker, Kubernetes, Monitoring.
-- Docker / Compose inspection, Kubernetes cluster inspection, Helm lists, system status, Grafana / Loki Explore, GitHub, m³, terminal and VSCodium.
+- Five workspaces, **12 touch keys each**: Home, Docker, Kubernetes, Monitoring and Selfhosting.
+- Docker / Compose inspection, Kubernetes cluster inspection, Helm lists, system status, Grafana / Loki Explore, GitHub, m³, terminal and VSCodium; configurable self-hosted dashboard shortcuts.
 - No changes to containers or clusters; no install commands, sudo or remote code downloads.
 - CT wheel, rotary dials and physical buttons are deliberately left at LoupixDeck defaults until tested on hardware.
 
@@ -24,6 +24,23 @@ Next open **LoupixDeck → Settings → Profiles → Import** and choose `integr
 
 The profile needs the `$HOME/.local/bin/m3-deck` symlink created by `install.sh` to launch its local commands. The existing `m3` menu is optional and installed separately. Grafana links expect `http://localhost:3000` and do not install Grafana.
 
+## Selfhosting shortcuts
+
+Inspired by the [Self-Hosting LoupixDeck community profile by Rand0mB0y](https://github.com/RadiatorTwo/LoupixDeck.Profiles/tree/master/profiles/Rand0mB0y/selfhosting-win-lin). This layout is rebuilt for 12 CT touch keys; no graphics or scripts are copied.
+
+A dedicated workspace offers Grafana, Karakeep, Prometheus, Alertmanager, Argo CD, Portainer, Dockge, Proxmox, TrueNAS, Homepage, GitHub and Home.
+
+The installer creates **`~/.config/m3-devops/services.json`** from `services.example.json` only if absent. Edit the JSON with the URLs for services you actually run. Keep unused values empty.
+
+```json
+{
+  "karakeep": "http://your-host.example:3002",
+  "argocd": "https://argocd.your-lab.example"
+}
+```
+
+The example above is abbreviated; retain the other keys in the generated file. No addresses or credentials are included in the public repository. Service shortcuts verify HTTP(S) URLs and use `xdg-open`, never string interpolation into a shell. An unset or invalid URL produces an error notification. Grafana remains pointed at the assumed local development endpoint `http://localhost:3000`.
+
 ## Rebuild and test
 
 ```bash
@@ -34,7 +51,7 @@ bash -n integrations/loupixdeck/scripts/m3-deck.sh integrations/loupixdeck/insta
 
 ## Safety and limitations
 
-All shell actions are in a fixed allowlist; the button cannot pass arbitrary shell text. Kubernetes read queries may contact your current remote cluster via your kubeconfig, so inspect the active context before running them. `docker info` and `helm list` are inspect-only operations; no destructive actions are included.
+All shell actions are in a fixed allowlist; the button cannot pass arbitrary shell text. Selfhosting addresses are read from a private local JSON file and opened through `xdg-open` after URL validation. Kubernetes read queries may contact your current remote cluster via your kubeconfig, so inspect the active context before running them. `docker info` and `helm list` are inspect-only operations; no destructive actions are included.
 
 The package targets LoupixDeck portable format v1 and config schema v13. **Not hardware-tested or import-tested on a physical CT**; validate on Fedora before treating it as production-ready. The profile is not an application plugin and does not install software.
 

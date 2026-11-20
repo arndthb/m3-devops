@@ -14,7 +14,7 @@ class TestProfile(unittest.TestCase):
         self.assertEqual(manifest["FormatVersion"], 1)
         self.assertEqual(manifest["ConfigSchemaVersion"], 13)
         self.assertEqual(manifest["SourceDeviceSlug"], "loupedeck-ct")
-        self.assertEqual(len(payload["Profile"]["Workspaces"]), 4)
+        self.assertEqual(len(payload["Profile"]["Workspaces"]), 5)
         for w in payload["Profile"]["Workspaces"]:
             keys = w["TouchButtonPages"][0]["TouchButtons"]
             self.assertEqual([b["Index"] for b in keys], list(range(12)))

@@ -74,10 +74,10 @@
           "color": "#FF253C54"
         },
         {
-          "label": "Docs",
-          "kind": "url",
-          "value": "https://kubernetes.io/docs/home/",
-          "color": "#FF694D36"
+          "label": "Selfhosting",
+          "kind": "go",
+          "value": "selfhosting",
+          "color": "#FF3159A3"
         }
       ]
     },
@@ -309,6 +309,85 @@
           "kind": "go",
           "value": "docker",
           "color": "#FF3159A3"
+        },
+        {
+          "label": "HOME",
+          "kind": "home",
+          "value": "",
+          "color": "#FF324A72"
+        }
+      ]
+    },
+    {
+      "id": "d41779c5-4444-4944-8444-000000000005",
+      "name": "Selfhosting",
+      "key": "selfhosting",
+      "buttons": [
+        {
+          "label": "Grafana",
+          "kind": "url",
+          "value": "http://localhost:3000/",
+          "color": "#FF694D36"
+        },
+        {
+          "label": "Karakeep",
+          "kind": "run",
+          "value": "service-karakeep",
+          "color": "#FF27566A"
+        },
+        {
+          "label": "Prometheus",
+          "kind": "run",
+          "value": "service-prometheus",
+          "color": "#FF27566A"
+        },
+        {
+          "label": "Alertmanager",
+          "kind": "run",
+          "value": "service-alertmanager",
+          "color": "#FF27566A"
+        },
+        {
+          "label": "Argo CD",
+          "kind": "run",
+          "value": "service-argocd",
+          "color": "#FF3159A3"
+        },
+        {
+          "label": "Portainer",
+          "kind": "run",
+          "value": "service-portainer",
+          "color": "#FF3159A3"
+        },
+        {
+          "label": "Dockge",
+          "kind": "run",
+          "value": "service-dockge",
+          "color": "#FF3159A3"
+        },
+        {
+          "label": "Proxmox",
+          "kind": "run",
+          "value": "service-proxmox",
+          "color": "#FF3159A3"
+        },
+        {
+          "label": "TrueNAS",
+          "kind": "run",
+          "value": "service-truenas",
+          "color": "#FF3159A3"
+        },
+        {
+          "label": "Homepage",
+          "kind": "run",
+          "value": "service-homepage",
+          "color": "#FF3159A3"
+        },
+        {
+          "label": "GitHub",
+          "kind": "url",
+          "value": "https://github.com/arndthb/m3-devops",
+          "color": "#FF694D36"
         },
         {
           "label": "HOME",

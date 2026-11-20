@@ -10,4 +10,11 @@ if [[ -e "$target" || -L "$target" ]]; then
   fi
 fi
 ln -sfn -- "$source" "$target"
+config_dir="$HOME/.config/m3-devops"
+config_file="$config_dir/services.json"
+mkdir -p -- "$config_dir"
+if [[ ! -e "$config_file" ]]; then
+  cp -- "$root/services.example.json" "$config_file"
+  printf 'Created optional URL configuration: %s\n' "$config_file"
+fi
 printf 'Installed: %s -> %s\n' "$target" "$source"
