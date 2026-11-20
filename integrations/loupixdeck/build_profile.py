@@ -2,6 +2,7 @@
 """Generate the optional LoupixDeck CT profile (ZIP, standard library only)."""
 import json
 import zipfile
+import uuid
 from pathlib import Path
 BASE = Path(__file__).resolve().parent
 LAYOUT = json.loads((BASE / "layout.json").read_text(encoding="utf-8"))
@@ -20,6 +21,76 @@ def command(b):
         assert b["value"].replace("-", "").isalnum()
         return "System.Shell($HOME/.local/bin/m3-deck " + b["value"] + ")"
     raise ValueError("Unexpected action kind")
+WHEEL_NAMESPACE = uuid.UUID(LAYOUT["profile_id"])
+
+def wheel_uid(*parts):
+    return str(uuid.uuid5(WHEEL_NAMESPACE, "/".join(str(p) for p in parts)))
+
+def wheel_canvas(wi, mode_index, segment_index, label, x, y, shared=False):
+    """Wheel artwork uses the entire 240x240 coordinate space.
+
+    Each segment canvas is clipped by LoupixDeck to its own quadrant.
+    The shared canvas paints a dark background and a centered m³ emblem.
+    """
+    stem = (wi, mode_index, segment_index)
+    state_id = wheel_uid("wheel", *stem, "state")
+    layer = {
+        "kind": "text",
+        "Id": wheel_uid("wheel", *stem, "text"),
+        "Name": "m³ mark" if shared else "Quadrant label",
+        "Text": label,
+        "TextSize": 21 if shared else (15 if len(label) > 6 else 18),
+        "TextColor": "#FF6EE7FF" if shared else "#FFF1F6FC",
+        "Bold": True,
+        "Centered": True,
+        "PositionX": x,
+        "PositionY": y,
+        "BoxWidth": 44 if shared else 76,
+        "BoxHeight": 32 if shared else 46,
+        "BehindSegments": False
+    }
+    return {
+        "Index": 1010 if shared else 1001 + segment_index,
+        "DefaultStateId": state_id,
+        "States": [{
+            "Id": state_id, "Name": "Default",
+            "Command": "",
+            "BackColor": "#FF101A29",
+            "BackgroundEnabled": shared,
+            "Layers": [layer]
+        }],
+        "Command": ""
+    }
+
+def wheel_modes(wi, workspace):
+    """Two split-screen modes: NAV and workspace-specific safe shortcuts.
+
+    Wheel ring changes the active workspace; swipe opens the wheel-mode menu.
+    """
+    cfg = workspace["wheel"]
+    modes = []
+    for mi, mode in enumerate(cfg["modes"]):
+        assert len(mode["segments"]) == 4
+        quadrants = [(-48, -48), (48, -48), (-48, 48), (48, 48)]
+        segments = []
+        for si, (item, (x, y)) in enumerate(zip(mode["segments"], quadrants)):
+            segments.append({
+                "Command": command(item),
+                "Canvas": wheel_canvas(wi, mi, si, item["label"], x, y)
+            })
+        modes.append({
+            "Index": 6,
+            "DisplayText": "m³ · " + mode["label"],
+            "RotaryLeftCommand": cfg["turnLeft"],
+            "RotaryRightCommand": cfg["turnRight"],
+            "Command": "",
+            "SplitMode": 4,  # Cross: TL, TR, BL, BR
+            "ShowSplitDividers": True,
+            "Segments": segments,
+            "SplitCanvas": wheel_canvas(wi, mi, 9, "m³", 0, 0, shared=True)
+        })
+    return modes
+
 def documents():
     workspaces = []
     for wi, w in enumerate(LAYOUT["workspaces"]):
@@ -42,7 +113,9 @@ def documents():
         workspaces.append({
             "Id": w["id"], "Name": w["name"], "StartupTouchPageIndex": 0,
             "TouchButtonPages": [{"Id": uid(wi * 100 + 1), "Name": w["name"],
-                                   "Page": 1, "TouchButtons": buttons}],
+                                   "Page": 1, "TouchButtons": buttons,
+                                   "WheelModes": wheel_modes(wi, w),
+                                   "WheelModeIndex": 0}],
             "RotaryButtonPages": [], "LeftRotaryButtonPages": [], "RightRotaryButtonPages": []
         })
     manifest = {
@@ -54,6 +127,7 @@ def documents():
         "ExportedUtc": "2026-11-20T19:00:00+00:00",
         "RequiredPlugins": [],
         "ReferencedCommands": ["System.GoHomeWorkspace", "System.GotoWorkspace",
+                               "System.NextWorkspace", "System.PreviousWorkspace",
                                "System.OpenUrl", "System.Shell"],
         "Assets": [], "Macros": [], "PayloadFile": "payload.json"
     }

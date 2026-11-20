@@ -79,7 +79,63 @@
           "value": "selfhosting",
           "color": "#FF3159A3"
         }
-      ]
+      ],
+      "wheel": {
+        "turnLeft": "System.PreviousWorkspace",
+        "turnRight": "System.NextWorkspace",
+        "modes": [
+          {
+            "label": "NAV",
+            "segments": [
+              {
+                "label": "DOCKER",
+                "kind": "go",
+                "value": "docker"
+              },
+              {
+                "label": "K8S",
+                "kind": "go",
+                "value": "kubernetes"
+              },
+              {
+                "label": "MONITOR",
+                "kind": "go",
+                "value": "monitoring"
+              },
+              {
+                "label": "SELFHOST",
+                "kind": "go",
+                "value": "selfhosting"
+              }
+            ]
+          },
+          {
+            "label": "HOME",
+            "segments": [
+              {
+                "label": "SYSTEM",
+                "kind": "run",
+                "value": "health"
+              },
+              {
+                "label": "GITHUB",
+                "kind": "url",
+                "value": "https://github.com/arndthb/m3-devops"
+              },
+              {
+                "label": "GRAFANA",
+                "kind": "url",
+                "value": "http://localhost:3000/"
+              },
+              {
+                "label": "M3 MENU",
+                "kind": "run",
+                "value": "m3"
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "id": "d41779c5-4444-4944-8444-000000000002",
@@ -158,7 +214,63 @@
           "value": "",
           "color": "#FF324A72"
         }
-      ]
+      ],
+      "wheel": {
+        "turnLeft": "System.PreviousWorkspace",
+        "turnRight": "System.NextWorkspace",
+        "modes": [
+          {
+            "label": "NAV",
+            "segments": [
+              {
+                "label": "DOCKER",
+                "kind": "go",
+                "value": "docker"
+              },
+              {
+                "label": "K8S",
+                "kind": "go",
+                "value": "kubernetes"
+              },
+              {
+                "label": "MONITOR",
+                "kind": "go",
+                "value": "monitoring"
+              },
+              {
+                "label": "SELFHOST",
+                "kind": "go",
+                "value": "selfhosting"
+              }
+            ]
+          },
+          {
+            "label": "DOCKER",
+            "segments": [
+              {
+                "label": "PS",
+                "kind": "run",
+                "value": "docker-ps"
+              },
+              {
+                "label": "IMAGES",
+                "kind": "run",
+                "value": "docker-images"
+              },
+              {
+                "label": "STATS",
+                "kind": "run",
+                "value": "docker-stats"
+              },
+              {
+                "label": "INFO",
+                "kind": "run",
+                "value": "docker-info"
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "id": "d41779c5-4444-4944-8444-000000000003",
@@ -237,7 +349,63 @@
           "value": "",
           "color": "#FF324A72"
         }
-      ]
+      ],
+      "wheel": {
+        "turnLeft": "System.PreviousWorkspace",
+        "turnRight": "System.NextWorkspace",
+        "modes": [
+          {
+            "label": "NAV",
+            "segments": [
+              {
+                "label": "DOCKER",
+                "kind": "go",
+                "value": "docker"
+              },
+              {
+                "label": "K8S",
+                "kind": "go",
+                "value": "kubernetes"
+              },
+              {
+                "label": "MONITOR",
+                "kind": "go",
+                "value": "monitoring"
+              },
+              {
+                "label": "SELFHOST",
+                "kind": "go",
+                "value": "selfhosting"
+              }
+            ]
+          },
+          {
+            "label": "KUBERNETES",
+            "segments": [
+              {
+                "label": "PODS",
+                "kind": "run",
+                "value": "k8s-pods"
+              },
+              {
+                "label": "NODES",
+                "kind": "run",
+                "value": "k8s-nodes"
+              },
+              {
+                "label": "EVENTS",
+                "kind": "run",
+                "value": "k8s-events"
+              },
+              {
+                "label": "CONTEXT",
+                "kind": "run",
+                "value": "k8s-current"
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "id": "d41779c5-4444-4944-8444-000000000004",
@@ -316,7 +484,63 @@
           "value": "",
           "color": "#FF324A72"
         }
-      ]
+      ],
+      "wheel": {
+        "turnLeft": "System.PreviousWorkspace",
+        "turnRight": "System.NextWorkspace",
+        "modes": [
+          {
+            "label": "NAV",
+            "segments": [
+              {
+                "label": "DOCKER",
+                "kind": "go",
+                "value": "docker"
+              },
+              {
+                "label": "K8S",
+                "kind": "go",
+                "value": "kubernetes"
+              },
+              {
+                "label": "MONITOR",
+                "kind": "go",
+                "value": "monitoring"
+              },
+              {
+                "label": "SELFHOST",
+                "kind": "go",
+                "value": "selfhosting"
+              }
+            ]
+          },
+          {
+            "label": "MONITORING",
+            "segments": [
+              {
+                "label": "GRAFANA",
+                "kind": "url",
+                "value": "http://localhost:3000/"
+              },
+              {
+                "label": "LOKI",
+                "kind": "url",
+                "value": "http://localhost:3000/explore"
+              },
+              {
+                "label": "CPU",
+                "kind": "run",
+                "value": "sys-processes"
+              },
+              {
+                "label": "RAM",
+                "kind": "run",
+                "value": "sys-memory"
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "id": "d41779c5-4444-4944-8444-000000000005",
@@ -395,7 +619,63 @@
           "value": "",
           "color": "#FF324A72"
         }
-      ]
+      ],
+      "wheel": {
+        "turnLeft": "System.PreviousWorkspace",
+        "turnRight": "System.NextWorkspace",
+        "modes": [
+          {
+            "label": "NAV",
+            "segments": [
+              {
+                "label": "DOCKER",
+                "kind": "go",
+                "value": "docker"
+              },
+              {
+                "label": "K8S",
+                "kind": "go",
+                "value": "kubernetes"
+              },
+              {
+                "label": "MONITOR",
+                "kind": "go",
+                "value": "monitoring"
+              },
+              {
+                "label": "SELFHOST",
+                "kind": "go",
+                "value": "selfhosting"
+              }
+            ]
+          },
+          {
+            "label": "SELFHOSTING",
+            "segments": [
+              {
+                "label": "KARAKEEP",
+                "kind": "run",
+                "value": "service-karakeep"
+              },
+              {
+                "label": "PROM",
+                "kind": "run",
+                "value": "service-prometheus"
+              },
+              {
+                "label": "ARGO CD",
+                "kind": "run",
+                "value": "service-argocd"
+              },
+              {
+                "label": "HOMEPAGE",
+                "kind": "run",
+                "value": "service-homepage"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

@@ -7,7 +7,7 @@
 - Five workspaces, **12 touch keys each**: Home, Docker, Kubernetes, Monitoring and Selfhosting.
 - Docker / Compose inspection, Kubernetes cluster inspection, Helm lists, system status, Grafana / Loki Explore, GitHub, m³, terminal and VSCodium; configurable self-hosted dashboard shortcuts.
 - No changes to containers or clusters; no install commands, sudo or remote code downloads.
-- CT wheel, rotary dials and physical buttons are deliberately left at LoupixDeck defaults until tested on hardware.
+- **CT centre wheel configured**: 2 round-screen modes per workspace, each split into four independently tappable quadrants, with original m³ text artwork. The six side dials and profile LED buttons remain at application defaults.
 
 ## Fedora setup
 
@@ -23,6 +23,19 @@ bash integrations/loupixdeck/install.sh
 Next open **LoupixDeck → Settings → Profiles → Import** and choose `integrations/loupixdeck/profiles/m3-devops-ct.loupixprofile`. Activate **m³ DevOps** after reviewing the import dialog.
 
 The profile needs the `$HOME/.local/bin/m3-deck` symlink created by `install.sh` to launch its local commands. The existing `m3` menu is optional and installed separately. Grafana links expect `http://localhost:3000` and do not install Grafana.
+
+## CT centre wheel — v0.2
+
+The central wheel is now an active controller, not just decoration. It follows the current workspace and shows **two wheel modes**:
+
+- **NAV**: four quadrants open Docker / Kubernetes / Monitoring / Selfhosting.
+- **TOOLS**: four context-sensitive read-only actions for the current workspace, e.g. Docker PS, Images, Stats, Info or Kubernetes Pods, Nodes, Events, Current Context.
+
+Rotate the ring **left/right to move to the previous/next workspace** (LoupixDeck's built-in navigation commands). Swipe up/down on the wheel screen to open the wheel-mode menu, then select the mode you want. The quadrant layout uses the **Cross (+)** split (top-left, top-right, bottom-left, bottom-right) with a central m³ mark.
+
+The wheel labels and actions are defined in `layout.json` and built into the portable profile by `build_profile.py`. No extra plugin is required for these static labels and actions. The wheel does **not** yet draw live CPU usage, Kubernetes metrics, LogQL timelines, or an attack-graph scrubber. That requires a separate data/renderer plugin and remains future work.
+
+This feature requires a LoupixDeck build supporting CT wheel split-screen mode; see the [upstream wheel documentation](https://github.com/RadiatorTwo/LoupixDeck/blob/master/docs/CT_WHEEL_APPEARANCE.md). **Hardware behavior still needs testing** with a connected CT.
 
 ## Selfhosting shortcuts
 
