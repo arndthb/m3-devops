@@ -1,0 +1,322 @@
+{
+  "name": "m³ DevOps",
+  "profile_id": "681b7348-e857-4a97-bcc4-4db4af1eb1a1",
+  "workspaces": [
+    {
+      "id": "d41779c5-4444-4944-8444-000000000001",
+      "name": "Home",
+      "key": "home",
+      "buttons": [
+        {
+          "label": "Docker",
+          "kind": "go",
+          "value": "docker",
+          "color": "#FF3159A3"
+        },
+        {
+          "label": "Kubernetes",
+          "kind": "go",
+          "value": "kubernetes",
+          "color": "#FF3159A3"
+        },
+        {
+          "label": "Monitoring",
+          "kind": "go",
+          "value": "monitoring",
+          "color": "#FF3159A3"
+        },
+        {
+          "label": "GitHub",
+          "kind": "url",
+          "value": "https://github.com/arndthb/m3-devops",
+          "color": "#FF694D36"
+        },
+        {
+          "label": "Grafana",
+          "kind": "url",
+          "value": "http://localhost:3000/",
+          "color": "#FF694D36"
+        },
+        {
+          "label": "Loki Explore",
+          "kind": "url",
+          "value": "http://localhost:3000/explore",
+          "color": "#FF694D36"
+        },
+        {
+          "label": "Terminal",
+          "kind": "run",
+          "value": "terminal",
+          "color": "#FF264D62"
+        },
+        {
+          "label": "VSCodium",
+          "kind": "run",
+          "value": "codium",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "m³ Menu",
+          "kind": "run",
+          "value": "m3",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Helm",
+          "kind": "run",
+          "value": "helm-list",
+          "color": "#FF264D62"
+        },
+        {
+          "label": "System",
+          "kind": "run",
+          "value": "health",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Docs",
+          "kind": "url",
+          "value": "https://kubernetes.io/docs/home/",
+          "color": "#FF694D36"
+        }
+      ]
+    },
+    {
+      "id": "d41779c5-4444-4944-8444-000000000002",
+      "name": "Docker",
+      "key": "docker",
+      "buttons": [
+        {
+          "label": "Running",
+          "kind": "run",
+          "value": "docker-ps",
+          "color": "#FF264D62"
+        },
+        {
+          "label": "All Containers",
+          "kind": "run",
+          "value": "docker-all",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Images",
+          "kind": "run",
+          "value": "docker-images",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Compose",
+          "kind": "run",
+          "value": "docker-compose",
+          "color": "#FF264D62"
+        },
+        {
+          "label": "Networks",
+          "kind": "run",
+          "value": "docker-networks",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Volumes",
+          "kind": "run",
+          "value": "docker-volumes",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Stats",
+          "kind": "run",
+          "value": "docker-stats",
+          "color": "#FF264D62"
+        },
+        {
+          "label": "Docker Info",
+          "kind": "run",
+          "value": "docker-info",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Docker Ver.",
+          "kind": "run",
+          "value": "docker-version",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Docs",
+          "kind": "url",
+          "value": "https://docs.docker.com/",
+          "color": "#FF694D36"
+        },
+        {
+          "label": "Monitoring",
+          "kind": "go",
+          "value": "monitoring",
+          "color": "#FF3159A3"
+        },
+        {
+          "label": "HOME",
+          "kind": "home",
+          "value": "",
+          "color": "#FF324A72"
+        }
+      ]
+    },
+    {
+      "id": "d41779c5-4444-4944-8444-000000000003",
+      "name": "Kubernetes",
+      "key": "kubernetes",
+      "buttons": [
+        {
+          "label": "All Pods",
+          "kind": "run",
+          "value": "k8s-pods",
+          "color": "#FF264D62"
+        },
+        {
+          "label": "Nodes",
+          "kind": "run",
+          "value": "k8s-nodes",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Namespaces",
+          "kind": "run",
+          "value": "k8s-namespaces",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Deployments",
+          "kind": "run",
+          "value": "k8s-deploy",
+          "color": "#FF264D62"
+        },
+        {
+          "label": "Services",
+          "kind": "run",
+          "value": "k8s-services",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Events",
+          "kind": "run",
+          "value": "k8s-events",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Contexts",
+          "kind": "run",
+          "value": "k8s-contexts",
+          "color": "#FF264D62"
+        },
+        {
+          "label": "Context Now",
+          "kind": "run",
+          "value": "k8s-current",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Helm Releases",
+          "kind": "run",
+          "value": "helm-list",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Helm Repos",
+          "kind": "run",
+          "value": "helm-repos",
+          "color": "#FF264D62"
+        },
+        {
+          "label": "Docs",
+          "kind": "url",
+          "value": "https://kubernetes.io/docs/home/",
+          "color": "#FF694D36"
+        },
+        {
+          "label": "HOME",
+          "kind": "home",
+          "value": "",
+          "color": "#FF324A72"
+        }
+      ]
+    },
+    {
+      "id": "d41779c5-4444-4944-8444-000000000004",
+      "name": "Monitoring",
+      "key": "monitoring",
+      "buttons": [
+        {
+          "label": "Grafana",
+          "kind": "url",
+          "value": "http://localhost:3000/",
+          "color": "#FF694D36"
+        },
+        {
+          "label": "Explore Logs",
+          "kind": "url",
+          "value": "http://localhost:3000/explore",
+          "color": "#FF694D36"
+        },
+        {
+          "label": "Docker Stats",
+          "kind": "run",
+          "value": "docker-stats",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Pods",
+          "kind": "run",
+          "value": "k8s-pods",
+          "color": "#FF264D62"
+        },
+        {
+          "label": "Memory",
+          "kind": "run",
+          "value": "sys-memory",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Disks",
+          "kind": "run",
+          "value": "sys-disk",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "Uptime",
+          "kind": "run",
+          "value": "sys-uptime",
+          "color": "#FF264D62"
+        },
+        {
+          "label": "CPU Top",
+          "kind": "run",
+          "value": "sys-processes",
+          "color": "#FF253C54"
+        },
+        {
+          "label": "GitHub",
+          "kind": "url",
+          "value": "https://github.com/arndthb/m3-devops",
+          "color": "#FF694D36"
+        },
+        {
+          "label": "Grafana Docs",
+          "kind": "url",
+          "value": "https://grafana.com/docs/grafana/latest/",
+          "color": "#FF694D36"
+        },
+        {
+          "label": "Docker",
+          "kind": "go",
+          "value": "docker",
+          "color": "#FF3159A3"
+        },
+        {
+          "label": "HOME",
+          "kind": "home",
+          "value": "",
+          "color": "#FF324A72"
+        }
+      ]
+    }
+  ]
+}
